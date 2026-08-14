@@ -31,12 +31,16 @@ const UserSchema = new mongoose.Schema({
     },
     is_verified: {
         type: Boolean,
-        default: false
+        default: true
     },
     rating_avg: {
         type: Number,
         default: 0
     },
+    is_online: {
+        type: Boolean,
+        default: false // By default offline rahega
+    }
 }, {
     timestamps: true
 },

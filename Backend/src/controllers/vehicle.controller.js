@@ -1,27 +1,60 @@
-const VehicleModel = require('../models/VehicleModel');
+const VehicleModel = require('./../models/vehicle.model')
 
 exports.registerVehicle = async (req, res) => {
     try {
         const loaderId = req.user.id;
         const role = req.user.role;
 
+        // 1. Role validation
         if (role !== 'loader') {
             return res.status(403).json({ success: false, message: "Only loaders can register vehicles" });
         }
 
-        const { vehicle_type, registration_number, capacity_kg } = req.body;
+        // 2. Body se data nikalna
+        const { 
+            vehicle_type, 
+            registration_number, 
+            capacity_kg,
+            current_location,  
+            is_available,      
+            document_status    
+        } = req.body;
 
+        // 3. Required fields validation
         if (!vehicle_type || !registration_number || !capacity_kg) {
-            return res.status(400).json({ success: false, message: "All fields are required" });
+            return res.status(400).json({ success: false, message: "Vehicle type, registration number, and capacity are required" });
         }
 
+        // 4. Parse current_location (Kyunki FormData se string bankar aata hai)
+        let parsedLocation = { type: 'Point', coordinates: [0, 0] };
+        if (current_location) {
+            try {
+                parsedLocation = typeof current_location === 'string' ? JSON.parse(current_location) : current_location;
+            } catch (e) {
+                // Agar parse na ho toh default use karega
+            }
+        }
+
+        // 5. Handle uploaded file (Multer se aane wali image ka path)
+        let photoUrl = req.body.vehicle_photo_url || "";
+        if (req.file) {
+            // Windows ke backslashes (\) ko forward slash (/) mein badal rahe hain
+            photoUrl = req.file.path.replace(/\\/g, "/"); 
+        }
+
+        // 6. Database mein saara data bhejna
         const newVehicle = await VehicleModel.create({
             loader_id: loaderId,
             vehicle_type,
             registration_number,
-            capacity_kg
+            capacity_kg,
+            current_location: parsedLocation,
+            is_available: is_available === 'true' || is_available === true,
+            document_status: document_status || 'pending',
+            vehicle_photo_url: photoUrl
         });
 
+        // 7. Success response
         return res.status(201).json({
             success: true,
             message: "Vehicle registered successfully",
@@ -129,3 +162,5 @@ exports.findNearbyLoaders = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+

@@ -1,11 +1,16 @@
 const express = require('express');
-const router = express.Router();
+const vehicleRouter = express.Router();
 const { registerVehicle, getMyVehicles, toggleAvailability, findNearbyLoaders } = require('../controllers/vehicle.controller');
-const { authenticateUser } = require('../middlewares/auth.middleware');
+const authenticate = require('./../utils/auth.util')
+const multer = require('multer');
+const vehicleController = require('./../controllers/vehicle.controller')
 
-router.get('/nearby', authenticateUser, findNearbyLoaders);
-router.get('/my-vehicles', authenticateUser, getMyVehicles);
-router.post('/register', authenticateUser, registerVehicle);
-router.patch('/:id/toggle-status', authenticateUser, toggleAvailability);
+const upload = multer({ dest: 'uploads/' });
 
-module.exports = router;
+// fpr the shop owner - he can see the vahicle that are available
+vehicleRouter.get('/nearby', authenticate.authenticateUser, vehicleController.findNearbyLoaders);
+vehicleRouter.get('/my-vehicles', authenticate.authenticateUser, getMyVehicles);
+vehicleRouter.post('/register', upload.single('vehicle_photo'), authenticate.authenticateUser, registerVehicle);
+vehicleRouter.patch('/:id/toggle-status', authenticate.authenticateUser, toggleAvailability);
+
+module.exports = vehicleRouter;

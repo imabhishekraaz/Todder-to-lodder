@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.accepted-orders-wrapper {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 30px 20px;
+}
+
+.orders-navbar {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.orders-navbar h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.back-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: #f1f5f9;
+}
+
+.orders-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.error-alert {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #cbd5e1;
+  border-top-color: #0f172a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.explore-btn {
+  background-color: #0f172a;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.order-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.category-badge {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.order-route {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  padding-left: 14px;
+}
+
+.route-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.dot-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.dot-indicator.green { background-color: #22c55e; }
+.dot-indicator.red { background-color: #ef4444; }
+
+.route-point small {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.route-point p {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.route-line {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background-color: #f1f5f9;
+}
+
+.order-specs {
+  display: flex;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spec-item span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.spec-item strong {
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.fare-text {
+  color: #16a34a !important;
+}
+
+.card-actions {
+  margin-top: 4px;
+}
+
+.track-btn {
+  width: 100%;
+  background-color: #0f172a;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.track-btn:hover {
+  background-color: #1e293b;
+}

@@ -34,6 +34,26 @@ const OrderSchema = new Schema({
     }],
     estimated_fare: Number,
     final_fare: Number,
+    
+    // 🚀 Nayi Fields Add Ki Gayi Hain (Database Persistence ke liye)
+    payment_status: { 
+        type: String, 
+        enum: ['pending', 'paid'], 
+        default: 'pending' 
+    },
+    is_rated: { 
+        type: Boolean, 
+        default: false 
+    },
+    rating: { 
+        type: Number, 
+        default: 0 
+    },
+    review: { 
+        type: String, 
+        default: '' 
+    },
+
     cancelled_by: {
         type: String, 
         enum: ['shop_owner', 'loader', null], 

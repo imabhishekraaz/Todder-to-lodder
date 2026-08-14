@@ -1,0 +1,210 @@
+/* Import Google Fonts - Outfit */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+}
+
+.profile-page-container {
+  min-height: 100vh;
+  width: 100%;
+  background: #f4f5f7;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Main Layout: Laptop View */
+.profile-main-layout {
+  position: relative;
+  background: #fff;
+  width: 100%;
+  max-width: 1300px;
+  padding: 50px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 50px;
+  align-items: start;
+}
+
+/* Back Button */
+.back-nav-btn {
+  position: absolute;
+  top: 25px;
+  left: 25px;
+  background: #f0f0f0;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  transition: 0.2s;
+}
+
+.back-nav-btn:hover {
+  background: #e0e0e0;
+}
+
+/* Sidebar Section */
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-right: 1px solid #eee;
+  padding-right: 40px;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-section img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px solid #f8f9fa;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+  margin-bottom: 20px;
+}
+
+.profile-name {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.role-badge {
+  background: #1a1a1a;
+  color: #F9C935;
+  padding: 6px 18px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Content Section */
+.profile-content {
+  flex: 1;
+}
+
+.content-header h3 {
+  font-size: 22px;
+  color: #1a1a1a;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.user-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.info-box {
+  background: #f8f9fa;
+  padding: 20px 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.info-box label {
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+}
+
+.info-box span {
+  font-weight: 600;
+  font-size: 16px;
+  color: #222;
+}
+
+/* Buttons */
+.desktop-logout {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #fff1f1;
+  color: #e11d48;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 40px;
+  transition: 0.2s;
+}
+
+.desktop-logout:hover {
+  background: #e11d48;
+  color: #fff;
+}
+
+.mobile-logout {
+  display: none;
+}
+
+/* ================= MOBILE VIEW RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .profile-page-container {
+    padding: 15px;
+  }
+
+  .profile-main-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 25px 20px;
+    gap: 25px;
+    min-height: calc(100vh - 30px);
+    justify-content: flex-start;
+  }
+
+  .profile-sidebar {
+    border-right: none;
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .desktop-logout {
+    display: none;
+  }
+
+  .mobile-logout {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: #fff1f1;
+    color: #e11d48;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: auto; /* Pushes to bottom */
+  }
+
+  .avatar-section img {
+    width: 110px;
+    height: 110px;
+  }
+
+  .user-info-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,143 @@
+.payment-history-wrapper {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Outfit', sans-serif;
+  padding-bottom: 40px;
+}
+
+.history-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 15px 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.history-navbar h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.back-btn {
+  background: #f1f5f9;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #334155;
+  transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #e2e8f0;
+}
+
+.history-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.error-alert {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.table-responsive {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.history-table th {
+  background: #f8fafc;
+  color: #475569;
+  padding: 16px;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.history-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.weight-text {
+  color: #64748b;
+}
+
+.route-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #475569;
+  max-width: 250px;
+}
+
+.amount-badge {
+  font-weight: 700;
+  color: #059669;
+  font-size: 15px;
+}
+
+.method-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-badge.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 50px;
+  background: white;
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
