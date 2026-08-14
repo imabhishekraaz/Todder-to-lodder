@@ -283,6 +283,27 @@ export const updatePaymentStatusApi = async (orderId, paymentData) => {
 //   }
 // };
 
+// Function to update loader location
+export const updateLoaderLocationApi = async (locationData) => {
+  try {
+    const token = localStorage.getItem('token')
+    // Axios automatically converts data to JSON format
+    const response = await API.put('/loader/location', locationData, {
+      headers : { Authorization : `Bearer ${token}`}
+    });
+
+    // Return the main response data from the backend
+    return response.data;
+  } catch (error) {
+    // If the backend sends an error response (like 400 or 404)
+    if (error.response && error.response.data) {
+      throw error.response.data; // Throw the backend error message
+    }
+    // If the server is down or there is a network issue
+    throw new Error('Server connection error. Please check if the backend is running.');
+  }
+};
+
 export const fetchLoaderHistoryApi = async () => {
   try {
     const token = localStorage.getItem('token');

@@ -124,7 +124,7 @@ const AddVehicle = () => {
       setSuccessMessage(`Vehicle added successfully! Status is ${statusToApply}.`);
       
       setTimeout(() => {
-        navigate('/loader/loader/dashboard');
+        navigate('/loader/dashboard');
       }, 1500);
 
     } catch (error) {

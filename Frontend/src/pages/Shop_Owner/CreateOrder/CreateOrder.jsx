@@ -18,21 +18,20 @@ const CreateOrder = () => {
     paymentMethod: 'upi'
   });
 
-  // Pickup GPS Coordinates (Browser se fetch honge)
   const [pickupCoords, setPickupCoords] = useState(null); 
+  const [dropCoords, setDropCoords] = useState(null); 
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [pickupStatus, setPickupStatus] = useState('');
+  const [dropStatus, setDropStatus] = useState('');
 
   useEffect(() => {
-    // 1. Razorpay Script Load Karein
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     document.body.appendChild(script);
 
-    // 2. Page khulte hi automatic pickup GPS capture karne ki koshish karein
     handleGetPickupGPS();
   }, []);
 
@@ -40,10 +39,25 @@ const CreateOrder = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Pickup Location ke GPS capture karne ka function
+  const getCoordinatesFromAddress = async (addressText) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        return [lon, lat]; 
+      }
+      return null;
+    } catch (err) {
+      console.error("Geocoding error:", err);
+      return null;
+    }
+  };
+
   const handleGetPickupGPS = () => {
     if (!navigator.geolocation) {
-      setPickupStatus('❌ Geolocation is not supported by your browser.');
+      setPickupStatus('Geolocation is not supported by your browser.');
       return;
     }
 
@@ -52,15 +66,33 @@ const CreateOrder = () => {
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        setPickupCoords([lng, lat]); // GeoJSON format: [Longitude, Latitude]
-        setPickupStatus('📍 Pickup GPS Captured Successfully!');
+        setPickupCoords([lng, lat]);
+        setPickupStatus('Pickup GPS Captured Successfully.');
       },
       (error) => {
         console.error("Geolocation error:", error);
-        setPickupStatus('❌ Failed to fetch pickup GPS. Please allow location access.');
+        setPickupStatus('Failed to fetch pickup GPS.');
       },
       { enableHighAccuracy: true }
     );
+  };
+
+  const handleVerifyDropAddress = async () => {
+    if (!formData.dropAddress) {
+      setDropStatus('Please enter a drop-off address first.');
+      return;
+    }
+
+    setDropStatus('Verifying drop address & fetching coordinates...');
+    const coords = await getCoordinatesFromAddress(formData.dropAddress);
+    
+    if (coords) {
+      setDropCoords(coords);
+      setDropStatus('Drop-off Location Verified & GPS Saved.');
+    } else {
+      setDropStatus('Could not locate address. Please provide a clearer landmark.');
+      setDropCoords([0, 0]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -76,20 +108,24 @@ const CreateOrder = () => {
         throw new Error('Please enter a valid estimated fare.');
       }
 
-      // Drop ke liye coordinates ki zaroorat nahi hai, isliye use [0, 0] ya empty rakha ja sakta hai
+      let finalDropCoords = dropCoords;
+      if (!finalDropCoords && formData.dropAddress) {
+        finalDropCoords = await getCoordinatesFromAddress(formData.dropAddress);
+      }
+
       const dropLocationData = {
         type: 'Point',
-        coordinates: [0, 0] 
+        coordinates: finalDropCoords || [0, 0] 
       };
 
       const buildPayload = (paymentInfo = null) => ({
         pickup: {
           address: formData.pickupAddress,
-          location: { type: 'Point', coordinates: pickupCoords } // Pickup ke real GPS cordinates
+          location: { type: 'Point', coordinates: pickupCoords }
         },
         drop: {
           address: formData.dropAddress,
-          location: dropLocationData // Drop keval text address rahega
+          location: dropLocationData
         },
         goods: {
           category: formData.goodsCategory,
@@ -97,18 +133,17 @@ const CreateOrder = () => {
         },
         vehicle_type_requested: formData.vehicleTypeRequested,
         estimated_fare: Number(formData.estimatedFare),
-        payment_method: formData.paymentMethod,
+        payment_method: paymentInfo ? 'upi' : formData.paymentMethod,
+        payment_status: paymentInfo ? 'paid' : 'pending',
         payment_details: paymentInfo
       });
 
-      // SCENARIO A: Cash on Delivery / Pay Later
       if (formData.paymentMethod === 'cash') {
         await createOrderApi(buildPayload());
         navigate('/shop/dashboard');
         return;
       }
 
-      // SCENARIO B: Online Payment via Razorpay
       const rzpResponse = await createRazorpayOrderApi({ amount: formData.estimatedFare });
       const razorpayOrder = rzpResponse.order;
 
@@ -165,7 +200,7 @@ const CreateOrder = () => {
         <button className="back-btn" onClick={() => navigate('/shop/dashboard')}>
           ← Back to Dashboard
         </button>
-        <h2>Post New Order 📦</h2>
+        <h2>Post New Order</h2>
       </nav>
 
       <div className="create-container">
@@ -173,16 +208,15 @@ const CreateOrder = () => {
 
         <form className="create-form" onSubmit={handleSubmit}>
           
-          {/* Pickup Section (GPS Coordinates + Address) */}
           <div className="form-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>📍 Pickup Details (Your Shop Location)</h3>
+              <h3>Pickup Details (Your Shop Location)</h3>
               <button 
                 type="button" 
                 onClick={handleGetPickupGPS}
                 style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
               >
-                Refresh Pickup GPS 🔄
+                Refresh Pickup GPS
               </button>
             </div>
             <small style={{ color: pickupCoords ? '#16a34a' : '#d97706', fontWeight: '600', display: 'block', marginTop: '4px' }}>
@@ -202,15 +236,27 @@ const CreateOrder = () => {
             </div>
           </div>
 
-          {/* Drop-off Section (Only Text Address, No GPS) */}
           <div className="form-section">
-            <h3>🎯 Drop-off Details (Destination)</h3>
-            <div className="input-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Drop-off Details (Destination)</h3>
+              <button 
+                type="button" 
+                onClick={handleVerifyDropAddress}
+                style={{ background: '#fef3c7', color: '#b45309', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                Verify & Get GPS
+              </button>
+            </div>
+            <small style={{ color: dropCoords ? '#16a34a' : '#d97706', fontWeight: '600', display: 'block', marginTop: '4px' }}>
+              {dropStatus}
+            </small>
+
+            <div className="input-group" style={{ marginTop: '10px' }}>
               <label>Drop-off Address / Landmark</label>
               <input 
                 type="text" 
                 name="dropAddress" 
-                placeholder="e.g., Industrial Area, Sector 4, Near Metro Station" 
+                placeholder="e.g., Industrial Area, Sector 4, Mathura" 
                 value={formData.dropAddress} 
                 onChange={handleChange} 
                 required 
@@ -218,9 +264,8 @@ const CreateOrder = () => {
             </div>
           </div>
 
-          {/* Goods & Payment Section */}
           <div className="form-section">
-            <h3>📦 Goods & Payment Options</h3>
+            <h3>Goods & Payment Options</h3>
             <div className="form-grid">
               <div className="input-group">
                 <label>Goods Category</label>
@@ -253,7 +298,7 @@ const CreateOrder = () => {
             </div>
 
             <div className="input-group" style={{ marginTop: '15px' }}>
-              <label>Select Payment Method 💳</label>
+              <label>Select Payment Method</label>
               <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange}>
                 <option value="upi">UPI / Online (Razorpay)</option>
                 <option value="cash">Cash on Delivery / Pay Later</option>
@@ -262,7 +307,7 @@ const CreateOrder = () => {
           </div>
 
           <button type="submit" className="submit-order-btn" disabled={isLoading}>
-            {isLoading ? 'Processing...' : formData.paymentMethod === 'upi' ? 'Pay Online & Post Order 🚀' : 'Post Order with Cash 📝'}
+            {isLoading ? 'Processing...' : formData.paymentMethod === 'upi' ? 'Pay Online & Post Order' : 'Post Order with Cash'}
           </button>
 
         </form>

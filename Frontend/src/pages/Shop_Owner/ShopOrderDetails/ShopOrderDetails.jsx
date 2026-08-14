@@ -13,7 +13,7 @@ const ShopOrderDetails = () => {
   const [order, setOrder] = useState(passedOrder);
   const [isLoading, setIsLoading] = useState(!passedOrder && Boolean(orderId));
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -43,7 +43,6 @@ const ShopOrderDetails = () => {
     }
   };
 
-  // ⭐ Direct Rating Submission
   const handleRatingSubmit = async (e) => {
     e.preventDefault();
     if (!order?.loader_id?._id && !order?.loader_id) return;
@@ -57,8 +56,7 @@ const ShopOrderDetails = () => {
         rating: Number(rating),
         review: review
       });
-      
-      // Local state update for rating
+
       setOrder(prevOrder => ({
         ...prevOrder,
         is_rated: true
@@ -70,13 +68,11 @@ const ShopOrderDetails = () => {
     }
   };
 
-  // 💵 Direct Payment Confirmation without full page reload
   const handlePaymentConfirm = async () => {
     setIsUpdatingPayment(true);
     try {
       await updatePaymentStatusApi(order._id, { payment_status: 'paid' });
-      
-      // Instant local state update to prevent UI reset/reload
+
       setOrder(prevOrder => ({
         ...prevOrder,
         payment_status: 'paid'
@@ -112,7 +108,7 @@ const ShopOrderDetails = () => {
           </div>
         ) : (
           <div className="details-card">
-            
+
             <div className="details-header">
               <div>
                 <span className="order-id-label">Order ID: #{order._id}</span>
@@ -123,7 +119,18 @@ const ShopOrderDetails = () => {
               </span>
             </div>
 
-            {order.loader_id ? (
+            {/* Cancelled State or Loader Card */}
+            {order.status === 'cancelled' ? (
+              <div className="cancelled-order-card" style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', margin: '20px 0', color: '#991b1b' }}>
+                <h4>❌ Order Cancelled</h4>
+                <p>This order has been cancelled.</p>
+                {order.payment_method?.toLowerCase() === 'upi' && (
+                  <p style={{ marginTop: '8px', fontWeight: 'bold' }}>
+                    🔄 Your UPI payment will be refunded to your source account within 3-5 business days.
+                  </p>
+                )}
+              </div>
+            ) : order.loader_id ? (
               <div className="loader-info-card">
                 <div className="loader-header-info">
                   <span className="loader-icon">🚚</span>
@@ -193,8 +200,12 @@ const ShopOrderDetails = () => {
             {/* 💵 Payment / Cash on Delivery Section */}
             <div className="payment-section-card" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', margin: '20px 0' }}>
               <h4>Payment Details</h4>
-              <p>Status: <strong>{order.payment_status?.toUpperCase() || 'PENDING (COD)'}</strong></p>
-              {order.payment_status !== 'paid' && (
+              <p>Payment Method: <strong>{order.payment_method ? order.payment_method.toUpperCase() : 'CASH'}</strong></p>
+              <p>Status: <strong>{order.payment_status ? order.payment_status.replace('_', ' ').toUpperCase() : 'PENDING'}</strong></p>
+
+              {(order.payment_method === 'cash' || order.payment_method === 'cod' || !order.payment_method) && 
+               !['paid', 'success', 'completed'].includes(order.payment_status?.toLowerCase()) && 
+               order.status !== 'cancelled' && (
                 <button 
                   className="pay-confirm-btn" 
                   onClick={handlePaymentConfirm} 

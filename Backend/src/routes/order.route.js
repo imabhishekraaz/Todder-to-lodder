@@ -2,7 +2,7 @@ const express = require('express');
 const orderRoute = express.Router();
 const loaderController = require('./../controllers/loader.controller')
 
-const { getFareEstimate, createOrder, acceptOrder, getAcceptedOrders, getShopOwnerOrders, updateOrderStatus, getLoaderEarningsAndHistory, updatePaymentStatus } = require('../controllers/order.controller');
+const { getFareEstimate, createOrder, acceptOrder, getAcceptedOrders, getShopOwnerOrders, updateOrderStatus, getLoaderEarningsAndHistory, updatePaymentStatus, cancelOrder } = require('../controllers/order.controller');
 const { authenticateUser } = require('../utils/auth.util');
 const { getOrderDetails } = require('../controllers/user.controller');
 
@@ -22,6 +22,7 @@ orderRoute.get('/nearby', authenticateUser, loaderController.getNearbyOrders);
 orderRoute.get('/accept-order', authenticateUser, getAcceptedOrders)
 orderRoute.get('/:orderId', authenticateUser, getOrderDetails)
 orderRoute.put('/:orderId/status', authenticateUser, updateOrderStatus);
+orderRoute.put('/:orderId/cancel', authenticateUser, cancelOrder)
 
 
 

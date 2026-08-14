@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateStatusApi, fetchLoaderHistoryApi } from '../../../api/api'; 
+import { updateStatusApi, fetchLoaderHistoryApi, updateLoaderLocationApi } from '../../../api/api'; 
 import './dashboard.css';
 
 const Dashboard = () => {
@@ -32,12 +32,39 @@ const Dashboard = () => {
         setIsOnline(parsedUser.is_online);
       }
 
-      // Agar user loader hai, toh real metrics fetch karein
+      // Agar user loader hai, toh real metrics fetch karein aur GPS location update karein
       if (parsedUser.role === 'loader') {
         loadLoaderRealStats();
+        updateCurrentLocationGPS(); // 🚀 Dashboard load hote hi GPS database mein save karne ke liye
       }
     }
   }, [navigate]);
+
+  // Browser GPS capture karke backend par save karne ka function
+  const updateCurrentLocationGPS = () => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          // Backend par coordinates bhej rahe hain (GeoJSON format: [Longitude, Latitude])
+          await updateLoaderLocationApi({
+            coordinates: [lng, lat]
+          });
+          console.log("Loader GPS auto-updated successfully:", [lng, lat]);
+        } catch (error) {
+          console.error("Failed to auto-update loader GPS:", error);
+        }
+      },
+      (error) => {
+        console.error("Geolocation permission denied or error:", error);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
 
   // Backend se Loader ki real earnings aur history fetch karne ka function
   const loadLoaderRealStats = async () => {
@@ -148,16 +175,16 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="drawer-links">
-            <button onClick={() => { setMenuOpen(false); navigate('/loader/dashboard'); }}>🏠 Dashboard</button>
-            <button onClick={() => { setMenuOpen(false); navigate('/profile'); }}>👤 My Profile</button>
+            <button onClick={() => { setMenuOpen(false); navigate('/loader/dashboard'); }}>Dashboard</button>
+            <button onClick={() => { setMenuOpen(false); navigate('/profile'); }}>My Profile</button>
             {user.role === 'loader' && (
               <>
-                <button onClick={() => { setMenuOpen(false); navigate('/loader/history'); }}>💰 History & Earnings</button>
-                <button onClick={() => { setMenuOpen(false); navigate('/my-vehicles'); }}>🚛 All Vehicles</button>
-                <button onClick={() => { setMenuOpen(false); navigate('/add-vehicle'); }}>➕ Add Vehicle</button>
+                <button onClick={() => { setMenuOpen(false); navigate('/loader/history'); }}>History & Earnings</button>
+                <button onClick={() => { setMenuOpen(false); navigate('/my-vehicles'); }}>All Vehicles</button>
+                <button onClick={() => { setMenuOpen(false); navigate('/add-vehicle'); }}>Add Vehicle</button>
               </>
             )}
-            <button onClick={handleLogout} className="drawer-logout-btn">🚪 Logout</button>
+            <button onClick={handleLogout} className="drawer-logout-btn">Logout</button>
           </div>
         </div>
       )}
@@ -168,7 +195,7 @@ const Dashboard = () => {
         {/* Hero Banner Section */}
         <div className="hero-banner">
           <div className="hero-text">
-            <h1>Welcome back, {user.name.split(' ')[0]}! 👋</h1>
+            <h1>Welcome back, {user.name.split(' ')[0]}!</h1>
             <p>Manage your fleet, track requests, and grow your logistics workflow.</p>
           </div>
 

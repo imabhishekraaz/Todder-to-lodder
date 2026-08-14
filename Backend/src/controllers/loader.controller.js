@@ -1,6 +1,55 @@
 const OrderModel = require('./../models/order.model')
 const vehicleModel = require('./../models/vehicle.model')
 
+
+exports.updateLoaderLocation = async (req, res) => {
+    try {
+        const loaderId = req.user.id; // JWT token se loader ki ID
+        const { coordinates } = req.body; // Frontend se aane wale [lng, lat]
+
+        // 1. Validation check
+        if (!coordinates || coordinates.length !== 2) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid coordinates provided." 
+            });
+        }
+
+        // 2. updateMany use karein taaki loader ke SAARE vehicles ke coordinates update ho jayein
+        const updateResult = await VehicleModel.updateMany(
+            { loader_id: loaderId },
+            { 
+                $set: { 
+                    "current_location.type": "Point",
+                    "current_location.coordinates": coordinates
+                } 
+            }
+        );
+
+        // 3. Agar loader ke paas koi vehicle hi nahi hai
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "No vehicles found for this loader." 
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Successfully updated location for ${updateResult.modifiedCount} vehicle(s).`,
+            updatedCount: updateResult.modifiedCount
+        });
+
+    } catch (error) {
+        console.error("Multiple vehicles location update error:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
+    }
+};
+
+
 exports.getNearbyOrders = async (req, res) => {
     try {
         const loaderId = req.user.id;

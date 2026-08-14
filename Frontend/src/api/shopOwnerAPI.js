@@ -25,6 +25,23 @@ export const fetchShopOrdersApi = async () => {
   }
 };
 
+export const cancelOrderApi = async (orderId) => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // 🚀 Correct Syntax: API.put(url, data_body, options_config)
+    const response = await API.put(`/orders/${orderId}/cancel`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 export const fetchOrderDetailsApi = async (orderId) => {
   try {
     const token = localStorage.getItem('token');
@@ -79,14 +96,14 @@ export const createOrderApi = async (orderData) => {
 export const getPaymentHistoryApi = async () => {
   try {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
       throw new Error('No authentication token found. Please login again.');
     }
 
     const response = await API.get('/payments/history', {
-      headers: { 
-        Authorization: `Bearer ${token}` 
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -103,14 +120,14 @@ export const getPaymentHistoryApi = async () => {
 export const updateShopProfileApi = async (profileData) => {
   try {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
       throw new Error('No authentication token found.');
     }
 
     const response = await API.put('/users/shop/profile', profileData, {
-      headers: { 
-        Authorization: `Bearer ${token}` 
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -133,8 +150,8 @@ export const getUserProfileApi = async () => {
     }
 
     const response = await API.get('/users/profile', {
-      headers: { 
-        Authorization: `Bearer ${token}` 
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 

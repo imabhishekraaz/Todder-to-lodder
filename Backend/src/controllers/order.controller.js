@@ -6,51 +6,72 @@ const PaymentModel = require('../models/payment.model'); // Aapka Payment schema
 const {LoaderModel  } = require('../models/user.model')
 
 
+exports.cancelOrder = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const order = await OrderModel.findById(orderId);
 
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Security check: Sirf 'requested' status wale orders hi cancel ho sakte hain (jab tak loader accept na kare)
+        if (order.status !== 'requested') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Cannot cancel order. It has already been accepted or is in progress." 
+            });
+        }
+
+        // Status ko update karke 'cancelled' kar dein
+        order.status = 'cancelled';
+        
+        // Status history mein bhi add kar sakte hain agar aapke project mein history maintain hoti hai
+        if (order.status_history) {
+            order.status_history.push({
+                status: 'cancelled',
+                timestamp: new Date()
+            });
+        }
+
+        await order.save();
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Order cancelled successfully", 
+            data: order 
+        });
+
+    } catch (error) {
+        console.error("Cancel Order Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 
 exports.createOrder = async (req, res) => {
     try {
-        const shopOwnerId = req.user.id || req.user._id;
-        const { 
-            pickup, 
-            drop, 
-            goods, 
-            vehicle_type_requested, 
-            estimated_fare, 
-            payment_method, 
-            payment_details 
-        } = req.body;
+        const shopOwnerId = req.user.id; // Token se shop owner ki ID
+        const { pickup, drop, goods, vehicle_type_requested, estimated_fare, payment_method, payment_details } = req.body;
 
-        // 1. Order database mein create karein
-        const newOrder = await OrderModel.create({
+        // Agar payment details (Razorpay response) aayi hai, toh status 'paid' aur method 'upi' hoga
+        const paymentStatus = payment_details ? 'paid' : 'pending';
+        const finalPaymentMethod = payment_details ? 'upi' : (payment_method || 'cash');
+
+        const newOrder = new OrderModel({
             shop_owner_id: shopOwnerId,
             pickup,
             drop,
             goods,
             vehicle_type_requested,
             estimated_fare,
+            payment_method: finalPaymentMethod,
+            payment_status: paymentStatus,
+            payment_details: payment_details || null,
             status: 'requested'
         });
 
-        // 2. Payment details ke mutabiq Payment record save karein
-        if (payment_method === 'upi' && payment_details) {
-            await PaymentModel.create({
-                order_id: newOrder._id,
-                amount: estimated_fare,
-                method: 'upi',
-                status: 'success',
-                transaction_ref: payment_details.razorpay_payment_id,
-                paid_at: new Date()
-            });
-        } else {
-            await PaymentModel.create({
-                order_id: newOrder._id,
-                amount: estimated_fare,
-                method: 'cash',
-                status: 'pending'
-            });
-        }
+        await newOrder.save();
 
         return res.status(201).json({
             success: true,
@@ -59,6 +80,7 @@ exports.createOrder = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Order Creation Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };

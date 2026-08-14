@@ -3,7 +3,8 @@ const vehicleRouter = express.Router();
 const { registerVehicle, getMyVehicles, toggleAvailability, findNearbyLoaders } = require('../controllers/vehicle.controller');
 const authenticate = require('./../utils/auth.util')
 const multer = require('multer');
-const vehicleController = require('./../controllers/vehicle.controller')
+const vehicleController = require('./../controllers/vehicle.controller');
+const { updateLoaderLocation } = require('../controllers/loader.controller');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -12,5 +13,6 @@ vehicleRouter.get('/nearby', authenticate.authenticateUser, vehicleController.fi
 vehicleRouter.get('/my-vehicles', authenticate.authenticateUser, getMyVehicles);
 vehicleRouter.post('/register', upload.single('vehicle_photo'), authenticate.authenticateUser, registerVehicle);
 vehicleRouter.patch('/:id/toggle-status', authenticate.authenticateUser, toggleAvailability);
+vehicleRouter.put('/loader/location', authenticate.authenticateUser, updateLoaderLocation);
 
 module.exports = vehicleRouter;
