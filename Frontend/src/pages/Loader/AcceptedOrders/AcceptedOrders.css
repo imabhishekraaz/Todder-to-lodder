@@ -27,20 +27,21 @@
   color: #0f172a;
 }
 
-.back-btn {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  padding: 8px 16px;
+/* 🚀 Updated Back Button Styling for High Visibility */
+.back-btn-2 {
+  background: #0f172a;          /* Dark solid background */
+  border: 1px solid #0f172a;
+  color: #ffffff;               /* Pure white text */
+  padding: 10px 18px;
   border-radius: 10px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 .back-btn:hover {
-  background: #f1f5f9;
+  background: #1e293b;          /* Slightly lighter dark shade on hover */
 }
 
 .orders-container {

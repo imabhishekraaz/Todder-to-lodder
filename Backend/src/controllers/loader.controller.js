@@ -16,7 +16,7 @@ exports.updateLoaderLocation = async (req, res) => {
         }
 
         // 2. updateMany use karein taaki loader ke SAARE vehicles ke coordinates update ho jayein
-        const updateResult = await VehicleModel.updateMany(
+        const updateResult = await vehicleModel.updateMany(
             { loader_id: loaderId },
             { 
                 $set: { 
@@ -62,7 +62,7 @@ exports.getNearbyOrders = async (req, res) => {
 
         // 2. Find the Loader's Vehicle to get their location and vehicle type
         const loaderVehicle = await vehicleModel.findOne({ loader_id: loaderId });
-        console.log("Loader Vehicle Found:", loaderVehicle);
+        
 
         if (!loaderVehicle) {
             return res.status(404).json({ success: false, message: "Vehicle not found. Please register a vehicle first." });

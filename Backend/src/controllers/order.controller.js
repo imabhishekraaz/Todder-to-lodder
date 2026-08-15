@@ -3,43 +3,48 @@ const { calculateDistance } = require('../utils/distanceCalculator');
 const OrderModel = require('../models/order.model');
 const VehicleModel = require('.././models/vehicle.model')
 const PaymentModel = require('../models/payment.model'); // Aapka Payment schema model
-const {LoaderModel  } = require('../models/user.model')
+const { LoaderModel } = require('../models/user.model')
 
 
 exports.cancelOrder = async (req, res) => {
     try {
-        const orderId = req.params.orderId;
+        const orderId = req.params.orderId || req.params.id;
         const order = await OrderModel.findById(orderId);
 
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Security check: Sirf 'requested' status wale orders hi cancel ho sakte hain (jab tak loader accept na kare)
-        if (order.status !== 'requested') {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Cannot cancel order. It has already been accepted or is in progress." 
+        // Security check: Agar order already accepted/in progress hai
+        if (order.status !== 'requested' && order.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot cancel order. It has already been accepted or is in progress."
             });
         }
 
-        // Status ko update karke 'cancelled' kar dein
+        // Check karein ki cancel kaun kar raha hai (Shop owner ya Loader)
+        const userRole = req.user?.role; // 'shop_owner' ya 'loader'
+        const cancellationReason = req.body.cancellation_reason || 'Cancelled by user';
+
         order.status = 'cancelled';
-        
-        // Status history mein bhi add kar sakte hain agar aapke project mein history maintain hoti hai
-        if (order.status_history) {
-            order.status_history.push({
-                status: 'cancelled',
-                timestamp: new Date()
-            });
+        order.cancelled_by = userRole === 'loader' ? 'loader' : 'shop_owner';
+        order.cancellation_reason = cancellationReason;
+
+        if (!order.status_history) {
+            order.status_history = [];
         }
+        order.status_history.push({
+            status: 'cancelled',
+            timestamp: new Date()
+        });
 
         await order.save();
 
-        return res.status(200).json({ 
-            success: true, 
-            message: "Order cancelled successfully", 
-            data: order 
+        return res.status(200).json({
+            success: true,
+            message: "Order cancelled/rejected successfully",
+            data: order
         });
 
     } catch (error) {
@@ -48,94 +53,127 @@ exports.cancelOrder = async (req, res) => {
     }
 };
 
-
 exports.createOrder = async (req, res) => {
     try {
-        const shopOwnerId = req.user.id; // Token se shop owner ki ID
-        const { pickup, drop, goods, vehicle_type_requested, estimated_fare, payment_method, payment_details } = req.body;
+        console.log("🔥 Full req.body received in backend:", req.body);
 
-        // Agar payment details (Razorpay response) aayi hai, toh status 'paid' aur method 'upi' hoga
-        const paymentStatus = payment_details ? 'paid' : 'pending';
-        const finalPaymentMethod = payment_details ? 'upi' : (payment_method || 'cash');
+        const {
+            vehicle_type_requested,
+            vehicle_id,
+            loader_id,
+            estimated_fare,
+            payment_method
+        } = req.body;
+
+        const shopOwnerId = req.user.id || req.user._id;
+        const photoPath = req.file ? req.file.path : '';
+
+        // Safe parsing helper function for FormData
+        const parseField = (field) => {
+            if (!field) return null;
+            if (typeof field === 'object') return field; // Agar pehle se object hai
+            try {
+                return JSON.parse(field);
+            } catch (e) {
+                return field;
+            }
+        };
+
+        const pickupData = parseField(req.body.pickup);
+        const dropData = parseField(req.body.drop);
+        const goodsData = parseField(req.body.goods);
+
+        // Validation
+        if (!loader_id || !vehicle_id) {
+            return res.status(400).json({ success: false, message: "Loader ID and Vehicle ID are required." });
+        }
 
         const newOrder = new OrderModel({
             shop_owner_id: shopOwnerId,
-            pickup,
-            drop,
-            goods,
+            loader_id: loader_id,
+            vehicle_id: vehicle_id,
+            pickup: {
+                address: pickupData?.address || req.body['pickup[address]'] || '',
+                location: {
+                    type: 'Point',
+                    coordinates: pickupData?.location?.coordinates || [
+                        parseFloat(req.body['pickup[location][coordinates][0]']) || 0,
+                        parseFloat(req.body['pickup[location][coordinates][1]']) || 0
+                    ]
+                }
+            },
+            drop: {
+                address: dropData?.address || req.body['drop[address]'] || '',
+                location: {
+                    type: 'Point',
+                    coordinates: dropData?.location?.coordinates || [
+                        parseFloat(req.body['drop[location][coordinates][0]']) || 0,
+                        parseFloat(req.body['drop[location][coordinates][1]']) || 0
+                    ]
+                }
+            },
+            goods: {
+                category: goodsData?.category || req.body['goods[category]'] || 'General Goods',
+                weight_kg: Number(goodsData?.weight_kg || req.body['goods[weight_kg]'] || 10),
+                photo_url: photoPath
+            },
             vehicle_type_requested,
-            estimated_fare,
-            payment_method: finalPaymentMethod,
-            payment_status: paymentStatus,
-            payment_details: payment_details || null,
-            status: 'requested'
+            estimated_fare: Number(estimated_fare) || 0,
+            payment_method: payment_method || 'cash',
+            status: 'requested',
+            status_history: [{ status: 'requested', timestamp: new Date() }]
         });
 
         await newOrder.save();
 
+        console.log("✅ Order created successfully with ID:", newOrder._id);
+
         return res.status(201).json({
             success: true,
-            message: "Order created successfully",
+            message: "Order created successfully!",
             data: newOrder
         });
 
     } catch (error) {
-        console.error("Order Creation Error:", error);
+        console.error("❌ Create Order Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 exports.acceptOrder = async (req, res) => {
     try {
-        const loaderId = req.user.id;
-        const role = req.user.role;
+        const loaderId = req.user?.id || req.user?._id;
         const orderId = req.params.orderId;
-        const { vehicle_id } = req.body; 
 
-        if (role !== 'loader') {
-            return res.status(403).json({ success: false, message: "Only loaders can accept orders" });
-        }
-
-        if (!vehicle_id) {
-            return res.status(400).json({ success: false, message: "Please provide the vehicle_id you are using" });
-        }
-
-        // 1. Verify that the vehicle belongs to this loader
-        const loaderVehicle = await VehicleModel.findOne({ _id: vehicle_id, loader_id: loaderId });
-        if (!loaderVehicle) {
-            return res.status(403).json({ success: false, message: "Yeh vehicle aapka nahi hai ya register nahi hai." });
-        }
-
-        // 2. Check if order exists and is still requested, then update
-        const order = await OrderModel.findOneAndUpdate(
-            { _id: orderId, status: 'requested' }, 
-            {
-                $set: { 
-                    status: 'accepted', 
-                    loader_id: loaderId, 
-                    vehicle_id: vehicle_id 
-                },
-                $push: { 
-                    status_history: { status: 'accepted', timestamp: new Date() } 
-                }
-            },
-            { new: true } 
-        );
+        const order = await OrderModel.findOne({
+            _id: orderId,
+            loader_id: loaderId,
+            $or: [{ status: 'requested' }, { status: 'pending' }]
+        });
 
         if (!order) {
-            return res.status(409).json({ 
-                success: false, 
-                message: "Order has already been accepted by another loader or cancelled." 
+            return res.status(404).json({ success: false, message: "Order not found or already processed." });
+        }
+
+        // 🔍 Check karein ki order ke paas vehicle_id hai ya nahi
+        if (!order.vehicle_id) {
+            return res.status(400).json({
+                success: false,
+                message: "Vehicle ID is missing for this order. Please assign a vehicle."
             });
         }
 
+        order.status = 'accepted';
+        order.status_history.push({ status: 'accepted', timestamp: new Date() });
+        await order.save();
+
         return res.status(200).json({
             success: true,
-            message: "Aapne order successfully accept kar liya hai!",
+            message: "Order accepted successfully!",
             data: order
         });
-
     } catch (error) {
+        console.error("Accept Order Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -153,7 +191,7 @@ exports.getFareEstimate = async (req, res) => {
         // const distance_km = distanceData.distanceValueInKm;
 
         // Abhi testing ke liye hum maan lete hain ki distance 12.5 km hai
-        const distance_km = 12.5; 
+        const distance_km = 12.5;
 
         // Utility function call karke fare nikalna
         const estimated_fare = calculateFare(distance_km, vehicle_type, goods_category);
@@ -186,7 +224,7 @@ exports.getFareEstimate = async (req, res) => {
         // 1. Asli distance nikalne ke liye Google Maps API call karein
         // pickup_location.coordinates = [lng, lat]
         const distance_km = await calculateDistance(
-            pickup_location.coordinates, 
+            pickup_location.coordinates,
             drop_location.coordinates
         );
 
@@ -220,8 +258,8 @@ exports.getAcceptedOrders = async (req, res) => {
             loader_id: loaderId,
             status: { $in: ['accepted', 'arrived', 'loaded', 'in_transit'] }
         })
-        .populate('shop_owner_id', 'name phone email') // 🚀 Schema ke exact field name ke sath populate
-        .sort({ updatedAt: -1 });
+            .populate('shop_owner_id', 'name phone email') // 🚀 Schema ke exact field name ke sath populate
+            .sort({ updatedAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -252,9 +290,9 @@ exports.getShopOwnerOrders = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
+        return res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };
@@ -263,67 +301,80 @@ exports.getShopOwnerOrders = async (req, res) => {
 
 exports.updateOrderStatus = async (req, res) => {
     try {
-        const { orderId } = req.params;
-        const { status } = req.body; // 'completed', etc.
-        const loaderId = req.user.id;
+        const orderId = req.params.orderId || req.params.id;
+        const { status } = req.body; // Yahan status ya value aa rahi hai ('delivered' ya 'paid' etc.)
 
         const order = await OrderModel.findById(orderId);
-
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found." });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Ensure yahi loader assigned hai
-        if (order.loader_id && order.loader_id.toString() !== loaderId.toString()) {
-            return res.status(403).json({ success: false, message: "Unauthorized to update this order." });
-        }
-
-        // Agar order pehle hi completed hai, toh dubara earnings add na ho
-        const isNewlyCompleted = status === 'delivered' && order.status !== 'delivered';
-
-        order.status = status;
-        order.status_history.push({ status, timestamp: new Date() });
-
-        if (status === 'delivered') {
-            order.final_fare = order.estimated_fare || 0;
+        // 🔍 Check karein ki kya update karna hai
+        if (status === 'paid') {
+            order.payment_status = 'paid'; // Payment status update karein
+        } else if (['requested', 'accepted', 'arrived', 'loaded', 'in_transit', 'delivered', 'cancelled'].includes(status)) {
+            order.status = status; // Main order status update karein
+            
+            if (!order.status_history) order.status_history = [];
+            order.status_history.push({
+                status: status,
+                timestamp: new Date()
+            });
+        } else {
+            return res.status(400).json({ success: false, message: "Invalid status value provided." });
         }
 
         await order.save();
 
-        // 🚀 Agar order pehli baar complete hua hai, toh loader ki earnings mein amount add karein
-        if (isNewlyCompleted) {
-            const earnedAmount = order.estimated_fare || 0;
-            
-            // Loader model mein total earnings update karein 
-            // (Note: Agar aapka model ka naam ya field alag ho jaise 'totalEarnings' ya 'earnings', toh use apne schema ke mutabiq check kar lein)
-            await LoaderModel.findByIdAndUpdate(loaderId, {
-                $inc: { total_earnings: earnedAmount, completed_orders_count: 1 } 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: `Order status updated to ${status}`,
-            data: order
+        return res.status(200).json({ 
+            success: true, 
+            message: "Order updated successfully", 
+            data: order 
         });
+
     } catch (error) {
+        console.error("Update Status Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
 
+exports.getLoaderOrders = async (req, res) => {
+    try {
+        const loaderId = req.user?.id || req.user?._id;
+        const role = req.user?.role;
 
+        if (role !== 'loader') {
+            return res.status(403).json({ success: false, message: "Access denied. Only loaders can view this." });
+        }
 
+        // Database se is loader_id wale saare orders nikalen
+        const orders = await OrderModel.find({ loader_id: loaderId })
+            .populate('shop_owner_id', 'name phone')
+            .populate('vehicle_id', 'registration_number vehicle_type')
+            .sort({ createdAt: -1 }); // Naye orders sabse upar
+
+        return res.status(200).json({
+            success: true,
+            count: orders.length,
+            data: orders
+        });
+
+    } catch (error) {
+        console.error("Get Loader Orders Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 exports.getLoaderEarningsAndHistory = async (req, res) => {
     try {
         const loaderId = req.user.id;
 
         const loader = await LoaderModel.findById(loaderId); // Ya LoaderModel.findById(loaderId)
-        
+
         // Delivered ya completed orders fetch karein
-        const completedOrders = await OrderModel.find({ 
-            loader_id: loaderId, 
-            status: { $in: ['delivered', 'completed'] } 
+        const completedOrders = await OrderModel.find({
+            loader_id: loaderId,
+            status: { $in: ['delivered', 'completed'] }
         }).sort({ updatedAt: -1 });
 
         // 🚀 Total Earnings khud calculate karein (estimated_fare ya final_fare ka sum)
@@ -343,14 +394,15 @@ exports.getLoaderEarningsAndHistory = async (req, res) => {
 };
 
 
+// 4. Update Payment Status (COD / Cash confirmation)
 exports.updatePaymentStatus = async (req, res) => {
     try {
-        const { orderId } = req.params;
-        const { payment_status } = req.body; // 'paid'
+        const orderId = req.params.id || req.params.orderId;
+        const { payment_status } = req.body;
 
         const order = await OrderModel.findById(orderId);
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found." });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
 
         order.payment_status = payment_status || 'paid';
@@ -358,9 +410,75 @@ exports.updatePaymentStatus = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Payment status updated to paid successfully!",
+            message: "Payment status updated successfully",
             data: order
         });
+    } catch (error) {
+        console.error("Update Payment Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+
+exports.markAsDelivered = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const order = await OrderModel.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found." });
+        }
+
+        order.status = 'delivered';
+        if (!order.status_history) {
+            order.status_history = [];
+        }
+        order.status_history.push({ status: 'delivered', timestamp: new Date() });
+
+        await order.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Order marked as delivered successfully!",
+            data: order
+        });
+    } catch (error) {
+        console.error("Mark Delivered Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+// Order Complete / Delivered karne ka controller
+exports.completeOrder = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await OrderModel.findById(orderId);
+
+        // Sirf status update karein, payment nahi
+        order.status = 'delivered';
+        order.status_history.push({ status: 'delivered', timestamp: new Date() });
+
+        await order.save();
+
+        return res.status(200).json({ success: true, message: "Order marked as delivered." });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Payment Confirm karne ka controller (Jab loader cash le le)
+exports.confirmPayment = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await OrderModel.findById(orderId);
+
+        // Payment status ko explicitly 'paid' karein
+        order.payment_status = 'paid';
+        await order.save();
+
+        return res.status(200).json({ success: true, message: "Payment confirmed by loader!" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

@@ -13,7 +13,7 @@ const ShopOrderDetails = () => {
   const [order, setOrder] = useState(passedOrder);
   const [isLoading, setIsLoading] = useState(!passedOrder && Boolean(orderId));
   const [errorMessage, setErrorMessage] = useState('');
-
+  
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -56,7 +56,7 @@ const ShopOrderDetails = () => {
         rating: Number(rating),
         review: review
       });
-
+      
       setOrder(prevOrder => ({
         ...prevOrder,
         is_rated: true
@@ -72,7 +72,7 @@ const ShopOrderDetails = () => {
     setIsUpdatingPayment(true);
     try {
       await updatePaymentStatusApi(order._id, { payment_status: 'paid' });
-
+      
       setOrder(prevOrder => ({
         ...prevOrder,
         payment_status: 'paid'
@@ -82,6 +82,22 @@ const ShopOrderDetails = () => {
     } finally {
       setIsUpdatingPayment(false);
     }
+  };
+
+  // Helper function to check if payment was online/UPI
+  const isOnlinePayment = () => {
+    return (
+      order.payment_method === 'upi' || 
+      order.payment_method === 'razorpay' || 
+      order.payment_details || 
+      order.razorpay_payment_id
+    );
+  };
+
+  const getPaymentMethodDisplay = () => {
+    if (isOnlinePayment()) return 'UPI / ONLINE';
+    if (order.payment_method) return order.payment_method.toUpperCase();
+    return 'CASH';
   };
 
   return (
@@ -108,7 +124,7 @@ const ShopOrderDetails = () => {
           </div>
         ) : (
           <div className="details-card">
-
+            
             <div className="details-header">
               <div>
                 <span className="order-id-label">Order ID: #{order._id}</span>
@@ -119,14 +135,17 @@ const ShopOrderDetails = () => {
               </span>
             </div>
 
-            {/* Cancelled State or Loader Card */}
+            {/* Cancelled vs Loader Assigned vs Waiting */}
             {order.status === 'cancelled' ? (
-              <div className="cancelled-order-card" style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', margin: '20px 0', color: '#991b1b' }}>
-                <h4>❌ Order Cancelled</h4>
-                <p>This order has been cancelled.</p>
-                {order.payment_method?.toLowerCase() === 'upi' && (
-                  <p style={{ marginTop: '8px', fontWeight: 'bold' }}>
-                    🔄 Your UPI payment will be refunded to your source account within 3-5 business days.
+              <div className="cancelled-info-card" style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', margin: '20px 0', color: '#991b1b' }}>
+                <p><strong> This order has been cancelled.</strong></p>
+                {isOnlinePayment() ? (
+                  <p style={{ marginTop: '6px', fontSize: '14px', fontWeight: '600' }}>
+                     Online payment detected. Your refund of ₹{order.estimated_fare} has been initiated to your source account (5-7 business days).
+                  </p>
+                ) : (
+                  <p style={{ marginTop: '6px', fontSize: '13px', fontWeight: '500' }}>
+                    This was a cash order. No online payment was made, so no refund is required.
                   </p>
                 )}
               </div>
@@ -197,15 +216,16 @@ const ShopOrderDetails = () => {
               </div>
             </div>
 
-            {/* 💵 Payment / Cash on Delivery Section */}
+            {/* Payment Details Section */}
             <div className="payment-section-card" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', margin: '20px 0' }}>
               <h4>Payment Details</h4>
-              <p>Payment Method: <strong>{order.payment_method ? order.payment_method.toUpperCase() : 'CASH'}</strong></p>
-              <p>Status: <strong>{order.payment_status ? order.payment_status.replace('_', ' ').toUpperCase() : 'PENDING'}</strong></p>
-
-              {(order.payment_method === 'cash' || order.payment_method === 'cod' || !order.payment_method) && 
-               !['paid', 'success', 'completed'].includes(order.payment_status?.toLowerCase()) && 
-               order.status !== 'cancelled' && (
+              <p>Payment Method: <strong>{getPaymentMethodDisplay()}</strong></p>
+              <p>Status: <strong>{order.status === 'cancelled' && isOnlinePayment() ? 'REFUND INITIATED' : (order.payment_status ? order.payment_status.replace('_', ' ').toUpperCase() : 'PENDING')}</strong></p>
+              
+              {/* Cash confirmation button sirf tab dikhega jab order cancel na ho aur method cash ho */}
+              {order.status !== 'cancelled' && 
+               !isOnlinePayment() && 
+               !['paid', 'success', 'completed'].includes(order.payment_status?.toLowerCase()) && (
                 <button 
                   className="pay-confirm-btn" 
                   onClick={handlePaymentConfirm} 
@@ -217,8 +237,8 @@ const ShopOrderDetails = () => {
               )}
             </div>
 
-            {/* ⭐ Rating Section */}
-            {(order.status === 'delivered' || order.status === 'completed') && (
+            {/* Rating Section */}
+            {order.status !== 'cancelled' && (order.status === 'delivered' || order.status === 'completed') && (
               <div className="rating-section-card" style={{ background: '#fef3c7', padding: '20px', borderRadius: '8px', margin: '20px 0' }}>
                 <h4>⭐ Rate Your Delivery Partner</h4>
                 {order.is_rated ? (

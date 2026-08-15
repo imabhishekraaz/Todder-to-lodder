@@ -1,0 +1,171 @@
+.nearby-loader-wrapper {
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  padding-bottom: 40px;
+}
+
+.nearby-loader-navbar {
+  background: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.back-btn {
+  background: #e2e8f0;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.nearby-loader-container {
+  max-width: 700px;
+  margin: 30px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section h4 {
+  font-size: 16px;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.input-group input, .form-section input, .payment-select {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.gps-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.specs-row {
+  display: flex;
+  gap: 15px;
+}
+
+.specs-row > div {
+  flex: 1;
+}
+
+.specs-row label {
+  font-size: 12px;
+  color: #64748b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.hint-text {
+  color: #d97706;
+  font-size: 13px;
+  background: #fef3c7;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.vehicles-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vehicle-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.vehicle-card:hover {
+  border-color: #94a3b8;
+}
+
+.vehicle-card.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.vehicle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vehicle-info strong {
+  color: #0f172a;
+}
+
+.vehicle-info small {
+  color: #475569;
+}
+
+.reg-no {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.vehicle-pricing {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.price-tag {
+  color: #059669;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.submit-order-btn {
+  width: 100%;
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.submit-order-btn:hover {
+  background: #047857;
+}
+
+.submit-order-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}

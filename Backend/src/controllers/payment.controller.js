@@ -110,3 +110,38 @@ exports.getShopPaymentHistory = async (req, res) => {
         });
     }
 };
+
+exports.getLoaderPaymentHistory = async (req, res) => {
+    try {
+        const loaderId = req.user?.id || req.user?._id;
+        const role = req.user?.role;
+
+        if (role !== 'loader') {
+            return res.status(403).json({ success: false, message: "Access denied. Only loaders can view this." });
+        }
+
+        // 🚀 Database se sirf wahi orders nikalen jo 'delivered' aur 'paid' dono hain
+        const paidOrders = await OrderModel.find({ 
+            loader_id: loaderId,
+            status: 'delivered',
+            payment_status: 'paid'
+        })
+        .populate('shop_owner_id', 'name phone')
+        .populate('vehicle_id', 'registration_number vehicle_type')
+        .sort({ updatedAt: -1 }); // Sabse recent payment sabse upar
+
+        // Total earnings ka sum calculate kar len
+        const totalEarnings = paidOrders.reduce((sum, order) => sum + (order.estimated_fare || order.final_fare || 0), 0);
+
+        return res.status(200).json({
+            success: true,
+            total_earnings: totalEarnings,
+            count: paidOrders.length,
+            data: paidOrders
+        });
+
+    } catch (error) {
+        console.error("Get Loader Payment History Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

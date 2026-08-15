@@ -270,25 +270,74 @@ export const updatePaymentStatusApi = async (orderId, paymentData) => {
   }
 };
 
-// // src/api/loaderAPI.js mein yeh add karein
-// export const fetchAcceptedOrdersApi = async () => {
-//   try {
-//     const token = localStorage.getItem('token');
-//     const response = await API.get('/orders/accept-order', {
-//       headers: { Authorization: `Bearer ${token}` }
-//     });
-//     return response.data; // { success: true, data: [...] }
-//   } catch (error) {
-//     throw error.response?.data || { message: 'Failed to fetch accepted orders.' };
-//   }
-// };
+export const markOrderAsDeliveredApi = async (orderId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await API.put(`/orders/delivered/${orderId}`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw new Error('Failed to mark as delivered.');
+  }
+};
+
+export const fetchLoaderPaymentHistoryApi = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await API.get('/payments/loader/payments', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw new Error('Failed to fetch payment history.');
+  }
+};
+
+// 1. Fetch Loader Orders API (Aapka purana format)
+export const fetchLoaderDirectOrdersApi = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await API.get('/orders/loader/orders', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw new Error('Failed to fetch loader orders. Please try again.');
+  }
+};
+
+export const rejectOrderApi = async (orderId, cancellationReason) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await API.put(`/orders/reject/${orderId}`, { cancellation_reason: cancellationReason }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw new Error('Failed to reject order. Please try again.');
+  }
+};
+
 
 // Function to update loader location
 export const updateLoaderLocationApi = async (locationData) => {
   try {
     const token = localStorage.getItem('token')
     // Axios automatically converts data to JSON format
-    const response = await API.put('/loader/location', locationData, {
+    const response = await API.put('vehicles/loader/location', locationData, {
       headers : { Authorization : `Bearer ${token}`}
     });
 

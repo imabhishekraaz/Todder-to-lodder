@@ -129,15 +129,15 @@ exports.findNearbyLoaders = async (req, res) => {
         if (!lng || !lat || !vehicle_type) {
             return res.status(400).json({
                 success: false,
-                message: "Longitude, Latitude aur vehicle_type bhejna zaroori hai"
+                message: "Longitude, Latitude aur vehicle_type are Required"
             });
         }
 
         // Aapka Geospatial Matching Engine 🚀
         const nearbyLoaders = await VehicleModel.find({
-            is_available: true,                      // Loader online hona chahiye
-            document_status: 'verified',             // ⚠️ Sirf verified loaders
-            vehicle_type: vehicle_type,              // Order ke hisaab se correct vehicle (e.g. mini_truck)
+            is_available: true,                       
+            document_status: 'verified',            
+            vehicle_type: vehicle_type,               
             current_location: {
                 $near: {
                     $geometry: {
@@ -159,6 +159,54 @@ exports.findNearbyLoaders = async (req, res) => {
         });
 
     } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+
+exports.getNearbyVehiclesForShop = async (req, res) => {
+    try {
+        const { lng, lat, vehicle_type } = req.query;
+
+        console.log("Received Query Params:", req.query); // Terminal mein check karne ke liye
+
+        if (!lng || !lat) {
+            return res.status(400).json({ success: false, message: "Latitude and Longitude are required." });
+        }
+
+        const maxDistanceInKm = 10; // 10 km radius
+
+        // Query object banayein
+        let query = {
+            is_available: true,
+            current_location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [parseFloat(lng), parseFloat(lat)]
+                    },
+                    $maxDistance: maxDistanceInKm * 1000 // 10,000 meters = 10 km
+                }
+            }
+        };
+
+        // Agar vehicle_type bheja gaya hai toh filter mein add karein
+        if (vehicle_type) {
+            query.vehicle_type = vehicle_type;
+        }
+
+        const vehicles = await VehicleModel.find(query).populate('loader_id', 'name phone');
+
+        console.log(`Found Vehicles within 10km:`, vehicles.length);
+
+        return res.status(200).json({
+            success: true,
+            data: vehicles
+        });
+
+    } catch (error) {
+        console.error("Nearby Vehicles Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };

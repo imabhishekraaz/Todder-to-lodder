@@ -6,7 +6,7 @@ import './LoaderCompleteOrder.css';
 const LoaderCompleteOrder = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const order = location.state?.order;
+  const [order, setOrder] = useState(location.state?.order);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -20,26 +20,37 @@ const LoaderCompleteOrder = () => {
     );
   }
 
-  // Shop Owner details extract karne ke liye safe check
   const shopOwnerName = order.shop_owner_id?.name || order.customer?.name || 'Shop Owner';
   const shopOwnerPhone = order.shop_owner_id?.phone || order.customer?.phone || 'N/A';
 
-  const handleCompleteOrder = async () => {
-    const confirm = window.confirm("Kya aap customer/shop ke address par pahunch gaye hain? Order ko complete mark karein?");
-    if (!confirm) return;
-
+  // 1. Mark Order as Delivered
+  const handleMarkAsDelivered = async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      // Yahan wahi PUT /orders/:orderId/status API call ho rahi hai
       await updateOrderStatusApi(order._id, 'delivered');
-      
-      alert('Order successfully completed! 🎉 Earnings added to your account.');
-      navigate('/loader/history');
+      setOrder(prev => ({ ...prev, status: 'delivered' }));
     } catch (err) {
-      console.error("Error completing order:", err);
-      setErrorMessage(err.message || 'Failed to complete order.');
+      console.error("Error marking delivered:", err);
+      setErrorMessage(err.message || 'Failed to mark as delivered.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 2. Confirm Payment & Complete
+  const handleConfirmPayment = async () => {
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      await updateOrderStatusApi(order._id, 'paid');
+      setOrder(prev => ({ ...prev, payment_status: 'paid' }));
+      navigate('/loader/dashboard');
+    } catch (err) {
+      console.error("Error confirming payment:", err);
+      setErrorMessage(err.message || 'Failed to confirm payment.');
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +66,19 @@ const LoaderCompleteOrder = () => {
       </nav>
 
       <div className="complete-container">
-        {errorMessage && <div className="alert error-alert">{errorMessage}</div>}
+        {errorMessage && <div className="alert error-alert" style={{ background: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{errorMessage}</div>}
 
-        <div className="status-banner">
-          <span>Current Status:</span>
-          <strong className={`status-tag ${order.status}`}>{order.status?.toUpperCase()}</strong>
+        <div className="status-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <span>Status: </span>
+            <strong className={`status-tag ${order.status}`} style={{ textTransform: 'uppercase', color: '#d97706' }}>{order.status}</strong>
+          </div>
+          <div>
+            <span>Payment: </span>
+            <strong style={{ textTransform: 'uppercase', color: order.payment_status === 'paid' ? '#059669' : '#dc2626' }}>
+              {order.payment_status || 'pending'}
+            </strong>
+          </div>
         </div>
 
         {/* Shop Owner Information Section */}
@@ -114,20 +133,38 @@ const LoaderCompleteOrder = () => {
           </div>
         </div>
 
-        {/* Action Button */}
-        {order.status !== 'delivered' ? (
-          <button 
-            className="mark-completed-btn" 
-            onClick={handleCompleteOrder} 
-            disabled={isLoading}
-          >
-            {isLoading ? 'Processing...' : 'Mark as Completed & Deliver ✅'}
-          </button>
-        ) : (
-          <div className="already-completed-msg">
-            ✓ This order is already marked as completed.
-          </div>
-        )}
+        {/* Action Buttons */}
+        <div className="action-section" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          
+          {order.status !== 'delivered' && (
+            <button 
+              className="mark-completed-btn" 
+              onClick={handleMarkAsDelivered} 
+              disabled={isLoading}
+              style={{ background: '#d97706', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              {isLoading ? 'Processing...' : 'Mark as Delivered 📦'}
+            </button>
+          )}
+
+          {order.status === 'delivered' && order.payment_status !== 'paid' && (
+            <button 
+              className="confirm-payment-btn" 
+              onClick={handleConfirmPayment} 
+              disabled={isLoading}
+              style={{ background: '#059669', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              {isLoading ? 'Processing...' : 'Confirm Cash Received & Complete 🎉'}
+            </button>
+          )}
+
+          {order.status === 'delivered' && order.payment_status === 'paid' && (
+            <div className="already-completed-msg" style={{ textAlign: 'center', background: '#d1fae5', color: '#065f46', padding: '12px', borderRadius: '6px', fontWeight: 'bold' }}>
+              ✓ Order Delivered & Payment Confirmed Successfully!
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );

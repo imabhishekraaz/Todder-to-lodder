@@ -35,7 +35,7 @@ const Dashboard = () => {
       // Agar user loader hai, toh real metrics fetch karein aur GPS location update karein
       if (parsedUser.role === 'loader') {
         loadLoaderRealStats();
-        updateCurrentLocationGPS(); // 🚀 Dashboard load hote hi GPS database mein save karne ke liye
+        updateCurrentLocationGPS(); 
       }
     }
   }, [navigate]);
@@ -50,7 +50,6 @@ const Dashboard = () => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           
-          // Backend par coordinates bhej rahe hain (GeoJSON format: [Longitude, Latitude])
           await updateLoaderLocationApi({
             coordinates: [lng, lat]
           });
@@ -91,7 +90,7 @@ const Dashboard = () => {
   };
 
   const handleNavigationOrder = () => {
-    navigate('/loader/order');
+    navigate('/orders', { state: { defaultTab: 'direct' } });
   };
 
   const toggleOnlineStatus = async () => {
@@ -139,7 +138,10 @@ const Dashboard = () => {
           <button onClick={() => navigate('/profile')} className="nav-link">Profile</button>
           {user.role === 'loader' && (
             <>
+              <button onClick={() => navigate('/accept/orders', { state: { defaultTab: 'accepted' } })} className="nav-link">Accepted Orders</button>
               <button onClick={() => navigate('/orders')} className="nav-link">History</button>
+              {/* 🚀 Added Payment History Navbar Button */}
+              <button onClick={() => navigate('/loader/history')} className="nav-link">Payments</button>
               <button onClick={() => navigate('/my-vehicles')} className="nav-link">Vehicles</button>
               <button onClick={() => navigate('/add-vehicle')} className="nav-link">Add Vehicle</button>
             </>
@@ -179,7 +181,10 @@ const Dashboard = () => {
             <button onClick={() => { setMenuOpen(false); navigate('/profile'); }}>My Profile</button>
             {user.role === 'loader' && (
               <>
+                <button onClick={() => { setMenuOpen(false); navigate('/loader/history', { state: { defaultTab: 'accepted' } }); }}>Accepted Orders</button>
                 <button onClick={() => { setMenuOpen(false); navigate('/loader/history'); }}>History & Earnings</button>
+                {/* 🚀 Added Payment History Mobile Drawer Button */}
+                <button onClick={() => { setMenuOpen(false); navigate('/loader/payments'); }}>Payment History</button>
                 <button onClick={() => { setMenuOpen(false); navigate('/my-vehicles'); }}>All Vehicles</button>
                 <button onClick={() => { setMenuOpen(false); navigate('/add-vehicle'); }}>Add Vehicle</button>
               </>
@@ -218,7 +223,7 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Stats Grid Bar (Real Data Populated) */}
+        {/* Stats Grid Bar */}
         <div className="metrics-grid">
           <div className="metric-card">
             <div className="metric-icon">💰</div>
@@ -261,13 +266,13 @@ const Dashboard = () => {
             <>
               <div className="action-card featured">
                 <div className="card-top">
-                  <span className="badge-tag">Live Feed</span>
-                  <div className="card-emoji">🚚</div>
+                  <span className="badge-tag">Incoming</span>
+                  <div className="card-emoji">📥</div>
                 </div>
-                <h3>Find New Loads</h3>
-                <p>Browse open delivery contracts matching your vehicle capacity nearby.</p>
+                <h3>Order Requests</h3>
+                <p>View and respond to order requests sent by shop owners.</p>
                 <button className="card-btn primary" disabled={!isOnline} onClick={handleNavigationOrder}>
-                  {isOnline ? 'Search Available Loads' : 'Go Online to Search'}
+                  {isOnline ? 'View Direct Requests' : 'Go Online to View'}
                 </button>
               </div>
 

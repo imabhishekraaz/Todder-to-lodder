@@ -19,6 +19,7 @@ import PaymentHistory from './pages/Shop_Owner/PaymentHistory/PaymentHistory'
 import ShopProfile from './pages/Shop_Owner/ShopProfile/ShopProfile'
 import LoaderHistoryOrder from './pages/Loader/LoaderHistoryOrder/LoaderHistoryOrder'
 import LoaderCompleteOrder from './pages/Loader/LoaderCompleteOrder/LoaderCompleteOrder'
+import NearbyLoader from './pages/Shop_Owner/NearbyLoader/NearbyLoader'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -34,19 +35,21 @@ function App() {
         <Route path='/add-vehicle' element={<ProtectedRoute allowedRole="loader"><AddVehicle /></ProtectedRoute>} />
         <Route path='/my-vehicles' element={<ProtectedRoute allowedRole="loader"><AllVehicles /></ProtectedRoute>} />
         <Route path='/profile' element={<ProtectedRoute allowedRole="loader"><Profile /></ProtectedRoute>} />
-        <Route path='/loader/order' element={<ProtectedRoute allowedRole="loader"><ActiveLoads /></ProtectedRoute>} />
-        <Route path='/accept-orders' element={<ProtectedRoute allowedRole="loader"><AcceptedOrders /></ProtectedRoute>} />
+        <Route path='/accept/orders' element={<ProtectedRoute allowedRole="loader"><AcceptedOrders /></ProtectedRoute>} />
         <Route path='/order-details' element={<ProtectedRoute allowedRole="loader"><OrderDetails /></ProtectedRoute>} />
         <Route path='/orders' element={<ProtectedRoute allowedRole="loader"><LoaderHistoryOrder /></ProtectedRoute>} />
         <Route path='/loader/complete-order' element={<ProtectedRoute allowedRole="loader"><LoaderCompleteOrder /></ProtectedRoute>} />
+        <Route path='/loader/history' element={<ProtectedRoute allowedRole="loader"><PaymentHistory /></ProtectedRoute>} />
 
 
         {/* ================= SHOP OWNER ROUTES ================= */}
         <Route path='/shop/dashboard' element={<ProtectedRoute allowedRole="shop"><ShopDashboard /></ProtectedRoute>} />
         <Route path='/order/details' element={<ProtectedRoute allowedRole="shop"><ShopOrderDetails /></ProtectedRoute>} />
-        <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><CreateOrder /></ProtectedRoute>} />
+        {/* <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><CreateOrder /></ProtectedRoute>} /> */}
         <Route path='/history' element={<ProtectedRoute allowedRole="shop"><PaymentHistory /></ProtectedRoute>} />
         <Route path='/shop/profile' element={<ProtectedRoute allowedRole="shop"><ShopProfile /></ProtectedRoute>} />
+        <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><NearbyLoader /></ProtectedRoute>} />
+
         {/* Fallback Route */}
         <Route path='*' element={<Navigate to='/login' replace />} />
       </Routes>

@@ -35,24 +35,27 @@ const OrderSchema = new Schema({
     estimated_fare: Number,
     final_fare: Number,
     
-    // 🚀 Nayi Fields Add Ki Gayi Hain (Database Persistence ke liye)
+    // 🚀 Yeh Fields Add Karni Hain:
+    payment_method: { 
+        type: String, 
+        enum: ['cash', 'cod', 'upi', 'razorpay'], 
+        default: 'cash' 
+    },
+    payment_details: {
+        razorpay_payment_id: String,
+        razorpay_order_id: String,
+        razorpay_signature: String,
+        status: String
+    },
     payment_status: { 
         type: String, 
         enum: ['pending', 'paid'], 
         default: 'pending' 
     },
-    is_rated: { 
-        type: Boolean, 
-        default: false 
-    },
-    rating: { 
-        type: Number, 
-        default: 0 
-    },
-    review: { 
-        type: String, 
-        default: '' 
-    },
+
+    is_rated: { type: Boolean, default: false },
+    rating: { type: Number, default: 0 },
+    review: { type: String, default: '' },
 
     cancelled_by: {
         type: String, 

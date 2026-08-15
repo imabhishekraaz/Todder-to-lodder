@@ -47,7 +47,7 @@ const AcceptedOrders = () => {
     <div className="accepted-orders-wrapper">
       
       <nav className="orders-navbar">
-        <button className="back-btn" onClick={() => navigate('/loader/dashboard')}>
+        <button className="back-btn-2" onClick={() => navigate('/loader/dashboard')}>
           ← Back to Dashboard
         </button>
         <h2>My Accepted Deliveries 🚚</h2>

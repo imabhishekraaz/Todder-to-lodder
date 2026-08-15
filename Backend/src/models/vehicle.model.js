@@ -21,6 +21,12 @@ const VehicleSchema = new Schema({
         type: Number,
         required: true
     },
+    //  Per KM fare field added
+    fare_per_km: {
+        type: Number,
+        required: true,
+        default: 15
+    },
     vehicle_photo_url: {
         type: String
     },

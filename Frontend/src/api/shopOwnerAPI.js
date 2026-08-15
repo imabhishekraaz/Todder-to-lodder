@@ -116,6 +116,26 @@ export const getPaymentHistoryApi = async () => {
   }
 };
 
+// Aas-pass ke available loaders/vehicles fetch karne ke liye
+export const fetchNearbyLoadersApi = async (lng, lat) => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await API.get('vehicles/nearby/loader', {
+      params: {
+        lng: lng,
+        lat: lat
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 // Function to update shop owner profile in backend
 export const updateShopProfileApi = async (profileData) => {
   try {
