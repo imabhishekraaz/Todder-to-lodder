@@ -20,7 +20,6 @@ const ShopPaymentHistory = () => {
     try {
       // 🚀 Dedicated API function call
       const response = await fetchShopPaymentHistoryApi();
-      console.log("Payment History Response:", response);
 
       const paymentList = response?.data || response?.payments || response || [];
       const validPayments = Array.isArray(paymentList) ? paymentList : [];

@@ -55,15 +55,13 @@ exports.cancelOrder = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
     try {
-        console.log("🔥 Full req.body received in backend:", req.body);
-
         const {
             vehicle_type_requested,
             vehicle_id,
             loader_id,
             estimated_fare,
             payment_method,
-            payment_status // 🚀 Added payment status
+            payment_status 
         } = req.body;
 
         const shopOwnerId = req.user.id || req.user._id;
@@ -83,12 +81,17 @@ exports.createOrder = async (req, res) => {
         const pickupData = parseField(req.body.pickup);
         const dropData = parseField(req.body.drop);
         const goodsData = parseField(req.body.goods);
-        const paymentDetailsData = parseField(req.body.payment_details); // 🚀 Parsed payment details
+        const paymentDetailsData = parseField(req.body.payment_details); 
 
         // Validation
         if (!loader_id || !vehicle_id) {
             return res.status(400).json({ success: false, message: "Loader ID and Vehicle ID are required." });
         }
+
+        const finalPaymentStatus = payment_status || (payment_method === 'upi' ? 'paid' : 'pending');
+        
+        // 🚀 LOGIC: Agar payment_status 'paid' hai (jaise UPI online payment), toh is_paid true hoga, warna false.
+        const isPaidFlag = finalPaymentStatus === 'paid';
 
         const newOrder = new OrderModel({
             shop_owner_id: shopOwnerId,
@@ -122,7 +125,8 @@ exports.createOrder = async (req, res) => {
             vehicle_type_requested,
             estimated_fare: Number(estimated_fare) || 0,
             payment_method: payment_method || 'cash',
-            payment_status: payment_status || (payment_method === 'upi' ? 'paid' : 'pending'), // 🚀 Auto set status
+            payment_status: finalPaymentStatus,
+            is_paid: isPaidFlag, // 🚀 Yahan is_paid automatically set ho jayega
             payment_details: paymentDetailsData || {
                 razorpay_payment_id: req.body['payment_details[razorpay_payment_id]'] || '',
                 razorpay_order_id: req.body['payment_details[razorpay_order_id]'] || '',
@@ -135,7 +139,7 @@ exports.createOrder = async (req, res) => {
 
         await newOrder.save();
 
-        console.log("✅ Order created successfully with ID:", newOrder._id);
+        console.log("✅ Order created successfully with ID:", newOrder._id, "| is_paid:", newOrder.is_paid);
 
         return res.status(201).json({
             success: true,
@@ -356,7 +360,9 @@ exports.getLoaderOrders = async (req, res) => {
             return res.status(403).json({ success: false, message: "Access denied. Only loaders can view this." });
         }
 
-        // Database se is loader_id wale saare orders nikalen
+        // 🚀 Optional: Aap chahein toh yahan query mein hi filter laga sakte hain 
+        // taaki database se sirf wahi orders aayein jinki payment abhi baki hai ya jo requested hain.
+        // Lekin agar aap frontend par filter kar rahe hain, toh sirf loader_id rakhna bhi theek hai.
         const orders = await OrderModel.find({ loader_id: loaderId })
             .populate('shop_owner_id', 'name phone')
             .populate('vehicle_id', 'registration_number vehicle_type')
@@ -404,6 +410,29 @@ exports.getLoaderEarningsAndHistory = async (req, res) => {
 
 
 // 4. Update Payment Status (COD / Cash confirmation)
+// exports.updatePaymentStatus = async (req, res) => {
+//     try {
+//         const orderId = req.params.id || req.params.orderId;
+//         const { payment_status } = req.body;
+
+//         const order = await OrderModel.findById(orderId);
+//         if (!order) {
+//             return res.status(404).json({ success: false, message: "Order not found" });
+//         }
+
+//         order.payment_status = payment_status || 'paid';
+//         await order.save();
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Payment status updated successfully",
+//             data: order
+//         });
+//     } catch (error) {
+//         console.error("Update Payment Error:", error);
+//         return res.status(500).json({ success: false, message: error.message });
+//     }
+// };
 exports.updatePaymentStatus = async (req, res) => {
     try {
         const orderId = req.params.id || req.params.orderId;
@@ -414,7 +443,14 @@ exports.updatePaymentStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
+        // 🚀 Payment status update karein
         order.payment_status = payment_status || 'paid';
+        
+        // 🚀 Yeh rahi wo main line jo loader ki active list se order instant hata degi
+        if (order.payment_status === 'paid' || order.payment_status === 'success') {
+            order.is_paid = true;
+        }
+
         await order.save();
 
         return res.status(200).json({
@@ -427,7 +463,6 @@ exports.updatePaymentStatus = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 
 
 exports.markAsDelivered = async (req, res) => {
@@ -454,6 +489,75 @@ exports.markAsDelivered = async (req, res) => {
         });
     } catch (error) {
         console.error("Mark Delivered Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+// Set the status for the Loader
+exports.completeDeliveryAndPayment = async (req, res) => {
+    try {
+        const orderId = req.params.orderId || req.params.id;
+        const { action } = req.body; // 'mark_delivered' ya 'confirm_cash'
+
+        const order = await OrderModel.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // 1. Agar loader "Mark as Delivered" kar raha hai
+        if (action === 'mark_delivered') {
+            order.status = 'delivered';
+            
+            if (!order.status_history) order.status_history = [];
+            order.status_history.push({
+                status: 'delivered',
+                timestamp: new Date()
+            });
+
+            await order.save();
+            return res.status(200).json({
+                success: true,
+                message: "Order marked as delivered successfully",
+                data: order
+            });
+        }
+
+        // 2. Agar loader "Confirm Cash Received & Complete" kar raha hai
+        if (action === 'confirm_cash') {
+            // 🛑 STRICT SECURITY CHECK: Check karein ki owner ne pay kiya hai ya nahi (is_paid === true)
+            const isOnline = order.payment_method === 'upi' || order.payment_method === 'razorpay';
+            const isOwnerPaid = isOnline || order.is_paid === true || order.payment_status === 'paid';
+
+            if (!isOwnerPaid) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Action Blocked! Shop owner ne abhi tak cash payment confirm nahi ki hai."
+                });
+            }
+
+            order.status = 'completed';
+            order.payment_status = 'paid';
+            order.is_paid = true; // Ensure flag is true
+
+            if (!order.status_history) order.status_history = [];
+            order.status_history.push({
+                status: 'completed',
+                timestamp: new Date()
+            });
+
+            await order.save();
+            return res.status(200).json({
+                success: true,
+                message: "Cash received and order completed successfully",
+                data: order
+            });
+        }
+
+        return res.status(400).json({ success: false, message: "Invalid action provided." });
+
+    } catch (error) {
+        console.error("Complete Delivery Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };

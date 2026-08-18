@@ -238,6 +238,15 @@ export const updateOrderStatusApi = async (orderId, newStatus) => {
   }
 };
 
+// For the Loader
+export const completeDeliveryApi = async (orderId, actionType) => {
+  const token = localStorage.getItem('token');
+  const response = await API.put(`/orders/${orderId}/complete-delivery`, 
+    { action: actionType }, 
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
 
 export const rateLoaderApi = async (ratingData) => {
   try {
@@ -288,15 +297,17 @@ export const markOrderAsDeliveredApi = async (orderId) => {
 export const fetchLoaderPaymentHistoryApi = async () => {
   try {
     const token = localStorage.getItem('token');
+    console.log("🚀 API function called! Token:", token ? "Present" : "Missing");
+
     const response = await API.get('/payments/loader/payments', {
       headers: { Authorization: `Bearer ${token}` }
     });
+
+    console.log("📦 RAW Response from Backend:", response);
     return response.data;
   } catch (error) {
-    if (error.response && error.response.data) {
-      throw error.response.data;
-    }
-    throw new Error('Failed to fetch payment history.');
+    console.error("❌ API Catch Error:", error);
+    throw error.response?.data || error;
   }
 };
 

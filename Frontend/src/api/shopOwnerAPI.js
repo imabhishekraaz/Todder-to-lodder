@@ -84,10 +84,8 @@ export const fetchShopPaymentHistoryApi = async () => {
     const response = await API.get('/payments/history', {
       headers: { Authorization: `Bearer ${token}` }
     });
-    console.log("RAW API RESPONSE:", response.data); // 👈 Yahan console check karein (F12 dabakar)
     return response.data;
   } catch (error) {
-    console.error("API Error:", error);
     if (error.response && error.response.data) {
       throw error.response.data;
     }

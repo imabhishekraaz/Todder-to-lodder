@@ -25,7 +25,7 @@ const OrderSchema = new Schema({
     scheduled_at: { type: Date, default: null },
     status: {
         type: String,
-        enum: ['requested', 'accepted', 'arrived', 'loaded', 'in_transit', 'delivered', 'cancelled'],
+        enum: ['requested', 'accepted', 'arrived', 'loaded', 'in_transit', 'delivered', 'completed', 'cancelled'],
         default: 'requested'
     },
     status_history: [{
@@ -35,7 +35,7 @@ const OrderSchema = new Schema({
     estimated_fare: Number,
     final_fare: Number,
     
-    // 🚀 Yeh Fields Add Karni Hain:
+    // Payment Fields
     payment_method: { 
         type: String, 
         enum: ['cash', 'cod', 'upi', 'razorpay'], 
@@ -51,6 +51,11 @@ const OrderSchema = new Schema({
         type: String, 
         enum: ['pending', 'paid'], 
         default: 'pending' 
+    },
+
+    is_paid: { 
+        type: Boolean, 
+        default: false 
     },
 
     is_rated: { type: Boolean, default: false },

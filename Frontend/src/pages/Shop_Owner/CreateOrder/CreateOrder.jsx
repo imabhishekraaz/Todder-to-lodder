@@ -122,6 +122,7 @@ const CreateOrder = () => {
         coordinates: finalDropCoords || [0, 0] 
       };
 
+      // 🚀 FIXED: Payload function jisme Cash ke liye payment_status 'pending' rahega
       const buildPayload = (paymentInfo = null) => ({
         pickup: {
           address: formData.pickupAddress,
@@ -138,13 +139,14 @@ const CreateOrder = () => {
         vehicle_type_requested: formData.vehicleTypeRequested,
         estimated_fare: Number(formData.estimatedFare),
         payment_method: paymentInfo ? 'upi' : formData.paymentMethod,
+        // Agar paymentInfo (Razorpay) hai tabhi 'paid', warna cash/other ke liye strictly 'pending'
         payment_status: paymentInfo ? 'paid' : 'pending',
-        payment_details: paymentInfo
+        payment_details: paymentInfo || null
       });
 
       // 1. Agar payment method Cash hai
       if (formData.paymentMethod === 'cash') {
-        await createOrderApi(buildPayload());
+        await createOrderApi(buildPayload(null)); // explicitly null bhej rahe hain taaki status 'pending' ho
         navigate('/shop/dashboard');
         return;
       }
@@ -180,7 +182,7 @@ const CreateOrder = () => {
               status: 'success'
             };
 
-            // Payment successful hone ke baad order save hoga
+            // Payment successful hone ke baad order save hoga with 'paid' status
             await createOrderApi(buildPayload(paymentDetails));
             navigate('/shop/dashboard');
           } catch (err) {

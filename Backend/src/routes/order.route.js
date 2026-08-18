@@ -2,7 +2,7 @@ const express = require('express');
 const orderRoute = express.Router();
 const loaderController = require('./../controllers/loader.controller')
 
-const { getFareEstimate, createOrder, acceptOrder, getAcceptedOrders, getShopOwnerOrders, updateOrderStatus, getLoaderEarningsAndHistory, updatePaymentStatus, cancelOrder, getLoaderOrders, markAsDelivered } = require('../controllers/order.controller');
+const { getFareEstimate, createOrder, acceptOrder, getAcceptedOrders, getShopOwnerOrders, updateOrderStatus, getLoaderEarningsAndHistory, updatePaymentStatus, cancelOrder, getLoaderOrders, markAsDelivered, completeDeliveryAndPayment } = require('../controllers/order.controller');
 const { authenticateUser } = require('../utils/auth.util');
 const { getOrderDetails } = require('../controllers/user.controller');
 const upload = require('../middleware/upload.middleware');
@@ -23,12 +23,14 @@ orderRoute.get('/nearby', authenticateUser, loaderController.getNearbyOrders);
 orderRoute.get('/accept-order', authenticateUser, getAcceptedOrders)
 orderRoute.get('/:orderId', authenticateUser, getOrderDetails)
 orderRoute.put('/:orderId/status', authenticateUser, updateOrderStatus);
+
 // for the shop owner
 orderRoute.put('/:orderId/cancel', authenticateUser, cancelOrder)
 
 // for the loader
 orderRoute.put('/reject/:orderId', authenticateUser, cancelOrder)
 orderRoute.put('/orders/delivered/:orderId', authenticateUser, markAsDelivered);
+orderRoute.put('/:id/complete-delivery', authenticateUser, completeDeliveryAndPayment)
 
 
 orderRoute.get('/loader/orders', authenticateUser, getLoaderOrders);

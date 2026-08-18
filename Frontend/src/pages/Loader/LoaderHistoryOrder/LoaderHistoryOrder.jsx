@@ -30,7 +30,6 @@ const LoaderHistoryOrder = () => {
       const response = await fetchLoaderDirectOrdersApi();
       const orderList = response.data || response.orders || response || [];
       
-      // Sirf 'requested' ya 'pending' status wale orders filter karein
       const pendingOrders = orderList.filter(o => o.status === 'requested' || o.status === 'pending');
       setOrders(pendingOrders);
     } catch (err) {
@@ -44,13 +43,18 @@ const LoaderHistoryOrder = () => {
   // 2. Load Accepted / My Deliveries
   const loadAcceptedOrders = async () => {
     setIsLoading(true);
-    setErrorMessage('');
+    setErrorMessage(''); // 🛠️ FIXED: seterrorMessage ki jagah setErrorMessage kar diya hai
     try {
       const response = await fetchLoaderDirectOrdersApi();
       const orderList = response.data || response.orders || response || [];
       
-      // Sirf accepted ya in-transit orders filter karein
-      const acceptedOrders = orderList.filter(o => o.status === 'accepted' || o.status === 'in_transit' || o.status === 'arrived');
+      // Active status wale orders jo abhi tak paid nahi hue hain (is_paid === false)
+      const acceptedOrders = orderList.filter(o => {
+        const isActiveStatus = ['accepted', 'in_transit', 'arrived', 'delivered'].includes(o.status);
+        const isNotPaid = o.is_paid === false || o.is_paid === undefined; // fallback for older orders
+        return isActiveStatus && isNotPaid;
+      });
+
       setOrders(acceptedOrders);
     } catch (err) {
       console.error("Error fetching accepted orders:", err);
@@ -60,11 +64,10 @@ const LoaderHistoryOrder = () => {
     }
   };
 
-  // 3. Accept Order Handler (Bina alert ke seedha shift karega)
+  // 3. Accept Order Handler
   const handleAcceptOrder = async (orderId) => {
     try {
       await acceptOrderApi(orderId);
-      // Turant state se hata kar ya tab change karke accepted mein bhej dein
       setOrders(prev => prev.filter(order => order._id !== orderId));
       setActiveTab('accepted'); 
     } catch (err) {
@@ -73,11 +76,10 @@ const LoaderHistoryOrder = () => {
     }
   };
 
-  // 4. Reject Order Handler (Bina alert ke seedha list se remove karega)
+  // 4. Reject Order Handler
   const handleRejectOrder = async (orderId) => {
     try {
       await rejectOrderApi(orderId, 'Rejected by loader');
-      // Turant UI state se is order ko hata dein taaki list se gayab ho jaye
       setOrders(prev => prev.filter(order => order._id !== orderId));
     } catch (err) {
       console.error("Error rejecting order:", err);
@@ -146,7 +148,7 @@ const LoaderHistoryOrder = () => {
           <div className="empty-state" style={{ textAlign: 'center', padding: '40px', background: '#f8fafc', borderRadius: '8px' }}>
             <span className="empty-icon" style={{ fontSize: '32px' }}>📭</span>
             <h3>No Orders Found</h3>
-            <p>{activeTab === 'direct' ? 'Aapke paas abhi koi nayi order request nahi aayi hai.' : 'Aapne abhi tak koi order accept nahi kiya hai.'}</p>
+            <p>{activeTab === 'direct' ? 'Aapke paas abhi koi nayi order request nahi aayi hai.' : 'Aapne abhi tak koi order accept nahi kiya hai ya sabhi ki payment clear ho chuki hai.'}</p>
           </div>
         ) : (
           <div className="orders-grid">
@@ -216,7 +218,7 @@ const LoaderHistoryOrder = () => {
                   ) : (
                     <button 
                       className="details-btn" 
-                      onClick={() => navigate('/loader/complete-order', { state: { order } })}
+                      onClick={() => navigate('/order-details', { state: { order } })}
                       style={{ width: '100%', background: '#2563eb', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
                     >
                       View Status & Complete 📋

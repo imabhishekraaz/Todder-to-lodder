@@ -13,6 +13,7 @@ import ShopDashboard from './pages/Shop_Owner/ShopDashboard/ShopDashboard'
 import ShopOrderDetails from './pages/Shop_Owner/ShopOrderDetails/ShopOrderDetails'
 import CreateOrder from './pages/Shop_Owner/CreateOrder/CreateOrder'
 
+
 // Protected Route import
 import ProtectedRoute from './components/ProtectedRoute'
 import PaymentHistory from './pages/Shop_Owner/PaymentHistory/PaymentHistory'
@@ -21,6 +22,7 @@ import LoaderHistoryOrder from './pages/Loader/LoaderHistoryOrder/LoaderHistoryO
 import LoaderCompleteOrder from './pages/Loader/LoaderCompleteOrder/LoaderCompleteOrder'
 import NearbyLoader from './pages/Shop_Owner/NearbyLoader/NearbyLoader'
 import ShopPaymentHistory from './pages/Shop_Owner/ShopPaymentHistory/ShopPaymentHistory'
+import LoaderPaymentHistory from './pages/Loader/LoaderPaymentHistory/LoaderPaymentHistory'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -40,7 +42,7 @@ function App() {
         <Route path='/order-details' element={<ProtectedRoute allowedRole="loader"><OrderDetails /></ProtectedRoute>} />
         <Route path='/orders' element={<ProtectedRoute allowedRole="loader"><LoaderHistoryOrder /></ProtectedRoute>} />
         <Route path='/loader/complete-order' element={<ProtectedRoute allowedRole="loader"><LoaderCompleteOrder /></ProtectedRoute>} />
-        <Route path='/loader/history' element={<ProtectedRoute allowedRole="loader"><PaymentHistory /></ProtectedRoute>} />
+        <Route path='/loader/history' element={<ProtectedRoute allowedRole="loader"><LoaderPaymentHistory/></ProtectedRoute>} />
 
 
         {/* ================= SHOP OWNER ROUTES ================= */}

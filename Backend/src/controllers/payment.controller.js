@@ -125,18 +125,17 @@ exports.getLoaderPaymentHistory = async (req, res) => {
             return res.status(403).json({ success: false, message: "Access denied. Only loaders can view this." });
         }
 
-        // 🚀 Database se sirf wahi orders nikalen jo 'delivered' aur 'paid' dono hain
+        // 🚀 Strict filter hata kar loader ke saare relevant orders nikal len
         const paidOrders = await OrderModel.find({ 
             loader_id: loaderId,
-            status: 'delivered',
-            payment_status: 'paid'
+            status: { $in: ['delivered', 'completed'] } // Aap apne zaroorat ke hisab se statuses add kar sakte hain
         })
         .populate('shop_owner_id', 'name phone')
         .populate('vehicle_id', 'registration_number vehicle_type')
-        .sort({ updatedAt: -1 }); // Sabse recent payment sabse upar
+        .sort({ updatedAt: -1 });
 
         // Total earnings ka sum calculate kar len
-        const totalEarnings = paidOrders.reduce((sum, order) => sum + (order.estimated_fare || order.final_fare || 0), 0);
+        const totalEarnings = paidOrders.reduce((sum, order) => sum + (Number(order.estimated_fare) || Number(order.final_fare) || 0), 0);
 
         return res.status(200).json({
             success: true,

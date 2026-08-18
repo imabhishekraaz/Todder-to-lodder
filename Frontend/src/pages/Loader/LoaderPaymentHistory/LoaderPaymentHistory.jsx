@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchLoaderPaymentHistoryApi } from '../../../api/api';
-import './PaymentHistory.css';
+import './LoaderPaymentHistory.css';
 
-const PaymentHistory = () => {
+const LoaderPaymentHistory = () => {
   const navigate = useNavigate();
   const [completedPayments, setCompletedPayments] = useState([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -11,6 +11,7 @@ const PaymentHistory = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    console.log("⚡ PaymentHistory component mounted!");
     fetchPayments();
   }, []);
 
@@ -18,12 +19,14 @@ const PaymentHistory = () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
+      console.log("🔄 Fetching payments...");
       const response = await fetchLoaderPaymentHistoryApi();
+      console.log("✅ Data received in component:", response);
       
-      setCompletedPayments(response.data || []);
-      setTotalEarnings(response.total_earnings || 0);
+      setCompletedPayments(response?.data || []);
+      setTotalEarnings(response?.total_earnings || 0);
     } catch (err) {
-      console.error("Error loading payments:", err);
+      console.error("❌ Error loading payments:", err);
       setErrorMessage(err.message || 'Failed to load payment history.');
     } finally {
       setIsLoading(false);
@@ -94,4 +97,4 @@ const PaymentHistory = () => {
   );
 };
 
-export default PaymentHistory;
+export default LoaderPaymentHistory;

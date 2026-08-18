@@ -68,6 +68,7 @@ const ShopOrderDetails = () => {
     }
   };
 
+  // 🚀 Shop Owner Cash Payment Confirmation Handler
   const handlePaymentConfirm = async () => {
     setIsUpdatingPayment(true);
     try {
@@ -77,6 +78,7 @@ const ShopOrderDetails = () => {
         ...prevOrder,
         payment_status: 'paid'
       }));
+      alert('Payment confirmed successfully! Now delivery partner can receive cash.');
     } catch (err) {
       alert(err.message || 'Failed to update payment status.');
     } finally {
@@ -84,20 +86,31 @@ const ShopOrderDetails = () => {
     }
   };
 
-  // Helper function to check if payment was online/UPI
+  // 🚀 Helper functions for accurate payment checks & displays
   const isOnlinePayment = () => {
     return (
       order.payment_method === 'upi' || 
       order.payment_method === 'razorpay' || 
-      order.payment_details || 
-      order.razorpay_payment_id
+      order.razorpay_payment_id ||
+      order.payment_status === 'paid' && order.payment_method !== 'cash'
     );
   };
 
+  const isPaymentPaid = () => {
+    const status = order.payment_status?.toLowerCase();
+    return status === 'paid' || status === 'success' || isOnlinePayment();
+  };
+
   const getPaymentMethodDisplay = () => {
+    if (order.payment_method === 'cash') return 'CASH / COD';
     if (isOnlinePayment()) return 'UPI / ONLINE';
-    if (order.payment_method) return order.payment_method.toUpperCase();
-    return 'CASH';
+    return order.payment_method ? order.payment_method.toUpperCase() : 'CASH';
+  };
+
+  const getPaymentStatusDisplay = () => {
+    if (order.status === 'cancelled' && isOnlinePayment()) return 'REFUND INITIATED';
+    if (isPaymentPaid()) return 'PAID ✓';
+    return 'PENDING ⏳';
   };
 
   return (
@@ -220,12 +233,14 @@ const ShopOrderDetails = () => {
             <div className="payment-section-card" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', margin: '20px 0' }}>
               <h4>Payment Details</h4>
               <p>Payment Method: <strong>{getPaymentMethodDisplay()}</strong></p>
-              <p>Status: <strong>{order.status === 'cancelled' && isOnlinePayment() ? 'REFUND INITIATED' : (order.payment_status ? order.payment_status.replace('_', ' ').toUpperCase() : 'PENDING')}</strong></p>
+              <p>Status: <strong style={{ color: getPaymentStatusDisplay().includes('PAID') ? '#059669' : '#d97706' }}>
+                {getPaymentStatusDisplay()}
+              </strong></p>
               
-              {/* Cash confirmation button sirf tab dikhega jab order cancel na ho aur method cash ho */}
+              {/* Cash confirmation button sirf tab dikhega jab order cash ho aur payment paid na ho */}
               {order.status !== 'cancelled' && 
-               !isOnlinePayment() && 
-               !['paid', 'success', 'completed'].includes(order.payment_status?.toLowerCase()) && (
+               order.payment_method === 'cash' && 
+               !isPaymentPaid() && (
                 <button 
                   className="pay-confirm-btn" 
                   onClick={handlePaymentConfirm} 
@@ -234,6 +249,12 @@ const ShopOrderDetails = () => {
                 >
                   {isUpdatingPayment ? 'Updating...' : 'Confirm Cash Paid / COD Received 💵'}
                 </button>
+              )}
+
+              {isPaymentPaid() && order.payment_method === 'cash' && (
+                <p style={{ color: '#059669', fontWeight: '600', marginTop: '8px' }}>
+                  ✅ Payment Confirmed by Owner.
+                </p>
               )}
             </div>
 
