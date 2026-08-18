@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updateStatusApi, fetchLoaderHistoryApi, updateLoaderLocationApi } from '../../../api/api'; 
-import './dashboard.css';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();

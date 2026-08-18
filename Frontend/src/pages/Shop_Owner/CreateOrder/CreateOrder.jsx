@@ -27,10 +27,14 @@ const CreateOrder = () => {
   const [dropStatus, setDropStatus] = useState('');
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Razorpay checkout script dynamically inject karna
+    if (!document.getElementById('razorpay-checkout-script')) {
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
 
     handleGetPickupGPS();
   }, []);
@@ -138,21 +142,34 @@ const CreateOrder = () => {
         payment_details: paymentInfo
       });
 
+      // 1. Agar payment method Cash hai
       if (formData.paymentMethod === 'cash') {
         await createOrderApi(buildPayload());
         navigate('/shop/dashboard');
         return;
       }
 
-      const rzpResponse = await createRazorpayOrderApi({ amount: formData.estimatedFare });
-      const razorpayOrder = rzpResponse.order;
+      // 2. Agar payment method UPI hai (Razorpay Flow)
+      console.log("Initiating Razorpay Order for amount:", formData.estimatedFare);
+      const rzpResponse = await createRazorpayOrderApi({ amount: Number(formData.estimatedFare) });
+      console.log("Razorpay Response:", rzpResponse);
+
+      const razorpayOrder = rzpResponse?.order || rzpResponse?.data?.order || rzpResponse;
+
+      if (!razorpayOrder || !razorpayOrder.id) {
+        throw new Error('Failed to generate Razorpay order ID from backend.');
+      }
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.');
+      }
 
       const options = {
-        key: 'rzp_test_TPJSjPgBUk1LNG',
+        key: 'rzp_test_TPJSjPgBUk1LNG', // Apni Test Key yahan ensure kar lein
         amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
+        currency: razorpayOrder.currency || 'INR',
         name: 'LoadShare Delivery',
-        description: 'Online Payment for Delivery',
+        description: 'Online Payment for Delivery Order',
         order_id: razorpayOrder.id,
         handler: async function (response) {
           try {
@@ -163,9 +180,11 @@ const CreateOrder = () => {
               status: 'success'
             };
 
+            // Payment successful hone ke baad order save hoga
             await createOrderApi(buildPayload(paymentDetails));
             navigate('/shop/dashboard');
           } catch (err) {
+            console.error("Error saving order after payment:", err);
             setErrorMessage(err.message || 'Payment successful, but failed to save order.');
             setIsLoading(false);
           }
@@ -180,15 +199,18 @@ const CreateOrder = () => {
       };
 
       const rzpModal = new window.Razorpay(options);
+      
       rzpModal.on('payment.failed', function (response) {
+        console.error("Payment Failed:", response.error);
         setErrorMessage(`Payment Failed: ${response.error.description}`);
         setIsLoading(false);
       });
-      rzpModal.open();
+
       setIsLoading(false);
+      rzpModal.open(); // 🚀 Yeh Razorpay popup modal open karega
 
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Submit Error:", error);
       setErrorMessage(error.message || 'Something went wrong.');
       setIsLoading(false);
     }

@@ -20,6 +20,7 @@ import ShopProfile from './pages/Shop_Owner/ShopProfile/ShopProfile'
 import LoaderHistoryOrder from './pages/Loader/LoaderHistoryOrder/LoaderHistoryOrder'
 import LoaderCompleteOrder from './pages/Loader/LoaderCompleteOrder/LoaderCompleteOrder'
 import NearbyLoader from './pages/Shop_Owner/NearbyLoader/NearbyLoader'
+import ShopPaymentHistory from './pages/Shop_Owner/ShopPaymentHistory/ShopPaymentHistory'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -49,6 +50,7 @@ function App() {
         <Route path='/history' element={<ProtectedRoute allowedRole="shop"><PaymentHistory /></ProtectedRoute>} />
         <Route path='/shop/profile' element={<ProtectedRoute allowedRole="shop"><ShopProfile /></ProtectedRoute>} />
         <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><NearbyLoader /></ProtectedRoute>} />
+        <Route path='/shop/history' element={<ProtectedRoute allowedRole="shop"><ShopPaymentHistory/> </ProtectedRoute>} />
 
         {/* Fallback Route */}
         <Route path='*' element={<Navigate to='/login' replace />} />

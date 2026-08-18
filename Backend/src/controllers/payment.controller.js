@@ -1,12 +1,12 @@
-const PaymentModel = require('../models/payment.model'); // Apne path ke hisab se import karein
+const PaymentModel = require('../models/payment.model');
 const OrderModel = require('../models/order.model');
 
 exports.createOrderWithPayment = async (req, res) => {
     try {
         const shopOwnerId = req.user.id;
-        const { pickup, drop, goods, vehicle_type_requested, estimated_fare, payment_details } = req.body;
+        const { pickup, drop, goods, vehicle_type_requested, estimated_fare, payment_method, payment_status, payment_details } = req.body;
 
-        // 1. Create the Order
+        // 1. Create the Order with Payment Status
         const newOrder = await OrderModel.create({
             shop_owner_id: shopOwnerId,
             pickup,
@@ -14,30 +14,35 @@ exports.createOrderWithPayment = async (req, res) => {
             goods,
             vehicle_type_requested,
             estimated_fare,
+            payment_method: payment_method || 'cash',
+            payment_status: payment_status || 'pending',
+            payment_details: payment_details || null,
             status: 'requested'
         });
 
-        // 2. Create the Payment Record
-        await PaymentModel.create({
-            order_id: newOrder._id,
-            amount: estimated_fare,
-            method: 'razorpay',
-            status: 'success',
-            transaction_ref: payment_details.razorpay_payment_id,
-            paid_at: new Date()
-        });
+        // 2. Agar Online Payment (Razorpay) hai, toh Payment Record bhi banayein
+        if (payment_status === 'paid' && payment_details) {
+            await PaymentModel.create({
+                order_id: newOrder._id,
+                amount: estimated_fare,
+                method: 'razorpay',
+                status: 'success',
+                transaction_ref: payment_details.razorpay_payment_id,
+                paid_at: new Date()
+            });
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Order posted and payment recorded successfully!",
+            message: "Order posted successfully!",
             data: newOrder
         });
 
     } catch (error) {
+        console.error("Create Order With Payment Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 
 const Razorpay = require('razorpay');
 
@@ -84,26 +89,26 @@ exports.getShopPaymentHistory = async (req, res) => {
             });
         }
 
-        // Database se payments fetch karein aur sath hi associated order details populate karein
-        const payments = await PaymentModel.find()
-            .populate({
-                path: 'order_id',
-                match: { shop_owner_id: shopOwnerId }, // Sirf is shop owner ke orders
-                select: 'pickup drop goods vehicle_type_requested estimated_fare status shop_owner_id'
-            })
-            .sort({ createdAt: -1 }); // Nayi history sabse upar
-
-        // Dusre shop owners ke null orders ko filter out karein
-        const validPayments = payments.filter(p => p.order_id !== null);
+        // 🚀 Shop owner ke saare paid ya online payment wale orders nikalna
+        const paidOrders = await OrderModel.find({ 
+            shop_owner_id: shopOwnerId,
+            $or: [
+                { payment_status: 'paid' },
+                { payment_method: 'upi' }
+            ]
+        })
+        .populate('loader_id', 'name phone')
+        .populate('vehicle_id', 'registration_number vehicle_type')
+        .sort({ createdAt: -1 }); // Nayi history sabse upar
 
         return res.status(200).json({
             success: true,
-            count: validPayments.length,
-            data: validPayments
+            count: paidOrders.length,
+            data: paidOrders
         });
 
     } catch (error) {
-        console.error("Error fetching payment history:", error);
+        console.error("Error fetching shop payment history:", error);
         return res.status(500).json({ 
             success: false, 
             message: error.message 

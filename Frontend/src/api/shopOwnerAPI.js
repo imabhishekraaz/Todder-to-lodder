@@ -69,12 +69,32 @@ export const createRazorpayOrderApi = async (data) => {
     });
     return response.data;
   } catch (error) {
+    console.error("Razorpay API Error:", error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to initiate online payment.');
+    }
+    throw new Error(error.message || 'Failed to initiate online payment.');
+  }
+};
+
+// Get all the Payment history of the  shop owner
+export const fetchShopPaymentHistoryApi = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await API.get('/payments/history', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log("RAW API RESPONSE:", response.data); // 👈 Yahan console check karein (F12 dabakar)
+    return response.data;
+  } catch (error) {
+    console.error("API Error:", error);
     if (error.response && error.response.data) {
       throw error.response.data;
     }
-    throw new Error('Failed to initiate online payment.');
+    throw new Error('Failed to fetch payment history.');
   }
 };
+
 
 // --- Create Order API (Supports both Cash and UPI/Razorpay success details) ---
 export const createOrderApi = async (orderData) => {

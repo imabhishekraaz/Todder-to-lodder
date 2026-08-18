@@ -62,7 +62,8 @@ exports.createOrder = async (req, res) => {
             vehicle_id,
             loader_id,
             estimated_fare,
-            payment_method
+            payment_method,
+            payment_status // 🚀 Added payment status
         } = req.body;
 
         const shopOwnerId = req.user.id || req.user._id;
@@ -71,7 +72,7 @@ exports.createOrder = async (req, res) => {
         // Safe parsing helper function for FormData
         const parseField = (field) => {
             if (!field) return null;
-            if (typeof field === 'object') return field; // Agar pehle se object hai
+            if (typeof field === 'object') return field; 
             try {
                 return JSON.parse(field);
             } catch (e) {
@@ -82,6 +83,7 @@ exports.createOrder = async (req, res) => {
         const pickupData = parseField(req.body.pickup);
         const dropData = parseField(req.body.drop);
         const goodsData = parseField(req.body.goods);
+        const paymentDetailsData = parseField(req.body.payment_details); // 🚀 Parsed payment details
 
         // Validation
         if (!loader_id || !vehicle_id) {
@@ -120,6 +122,13 @@ exports.createOrder = async (req, res) => {
             vehicle_type_requested,
             estimated_fare: Number(estimated_fare) || 0,
             payment_method: payment_method || 'cash',
+            payment_status: payment_status || (payment_method === 'upi' ? 'paid' : 'pending'), // 🚀 Auto set status
+            payment_details: paymentDetailsData || {
+                razorpay_payment_id: req.body['payment_details[razorpay_payment_id]'] || '',
+                razorpay_order_id: req.body['payment_details[razorpay_order_id]'] || '',
+                razorpay_signature: req.body['payment_details[razorpay_signature]'] || '',
+                status: req.body['payment_details[status]'] || 'success'
+            },
             status: 'requested',
             status_history: [{ status: 'requested', timestamp: new Date() }]
         });

@@ -9,7 +9,8 @@ const AddVehicle = () => {
   const [formData, setFormData] = useState({
     vehicle_type: 'mini_truck',
     registration_number: '',
-    capacity_kg: ''
+    capacity_kg: '',
+    fare_per_km: '15' // Default value
   });
   
   // Photo upload states
@@ -22,16 +23,14 @@ const AddVehicle = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // --- NEW: Location State ---
-  const [coordinates, setCoordinates] = useState([0, 0]); // Default [lng, lat]
+  // Location State
+  const [coordinates, setCoordinates] = useState([0, 0]); 
   const [locationStatus, setLocationStatus] = useState('Fetching live location...');
 
-  // Component load hote hi location fetch karega
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // MongoDB expects [longitude, latitude]
           setCoordinates([position.coords.longitude, position.coords.latitude]);
           setLocationStatus('📍 Live location captured successfully');
         },
@@ -46,12 +45,16 @@ const AddVehicle = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     setErrorMessage('');
     setSuccessMessage('');
   };
 
-  // --- Drag and Drop Logic Start ---
+  // --- Drag and Drop Logic ---
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -92,7 +95,6 @@ const AddVehicle = () => {
     setPreviewUrl('');
     if (fileInputRef.current) fileInputRef.current.value = ""; 
   };
-  // --- Drag and Drop Logic End ---
 
   // Handle Form Submit
   const handleSubmit = async (e) => {
@@ -106,10 +108,10 @@ const AddVehicle = () => {
       submitData.append('vehicle_type', formData.vehicle_type);
       submitData.append('registration_number', formData.registration_number);
       submitData.append('capacity_kg', Number(formData.capacity_kg));
+      submitData.append('fare_per_km', Number(formData.fare_per_km)); // 🚀 Ensuring number is sent
       submitData.append('document_status', statusToApply);
       submitData.append('is_available', false);
       
-      // --- NEW: Bhejte waqt real coordinates bhej rahe hain ---
       submitData.append('current_location', JSON.stringify({ 
         type: 'Point', 
         coordinates: coordinates 
@@ -173,12 +175,27 @@ const AddVehicle = () => {
             <input type="number" id="capacity_kg" name="capacity_kg" placeholder="e.g. 500" value={formData.capacity_kg} onChange={handleChange} required className="form-control" />
           </div>
 
+          {/* Fare Per KM Input Field */}
+          <div className="input-group">
+            <label htmlFor="fare_per_km">Fare Per KM (₹)</label>
+            <input 
+              type="number" 
+              id="fare_per_km" 
+              name="fare_per_km" 
+              placeholder="e.g. 15" 
+              value={formData.fare_per_km} 
+              onChange={handleChange} 
+              required 
+              className="form-control" 
+            />
+          </div>
+
           {/* Location Status Indicator */}
           <div style={{ fontSize: '13px', color: coordinates[0] !== 0 ? '#10b981' : '#f59e0b', fontWeight: '600' }}>
             {locationStatus}
           </div>
 
-          {/* Premium Drag & Drop File Upload Section */}
+          {/* Drag & Drop File Upload Section */}
           <div className="input-group">
             <label>Vehicle Photo (Required for Auto-Verify)</label>
             

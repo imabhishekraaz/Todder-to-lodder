@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchNearbyLoadersApi, createOrderApi } from '../../../api/shopOwnerAPI';
+import { fetchNearbyLoadersApi, createOrderApi, createRazorpayOrderApi } from '../../../api/shopOwnerAPI';
 import './NearbyLoader.css';
 
 const NearbyLoader = () => {
   const navigate = useNavigate();
+
+  const shopOwner = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Form States
   const [pickupAddress, setPickupAddress] = useState('');
@@ -20,8 +22,8 @@ const NearbyLoader = () => {
   // Goods & Photo States
   const [goodsCategory, setGoodsCategory] = useState('General Goods');
   const [weightKg, setWeightKg] = useState(10);
-  const [goodsPhoto, setGoodsPhoto] = useState(null); // 👈 Photo file state
-  const [photoPreview, setPhotoPreview] = useState(null); // 👈 Preview ke liye
+  const [goodsPhoto, setGoodsPhoto] = useState(null); 
+  const [photoPreview, setPhotoPreview] = useState(null); 
 
   const [vehicleType, setVehicleType] = useState('mini_truck');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -36,6 +38,17 @@ const NearbyLoader = () => {
   const [loadingLoaders, setLoadingLoaders] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Component load par Razorpay script load karna
+  useEffect(() => {
+    if (!document.getElementById('razorpay-checkout-script')) {
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   // Accurate Road Distance calculation
   const calculateAccurateDistanceKm = (lat1, lon1, lat2, lon2) => {
@@ -196,7 +209,7 @@ const NearbyLoader = () => {
     ? Math.max(Math.round(distanceKm * selectedFarePerKm), 50) 
     : 0;
 
-  // 5. Submit Order Handler using FormData (For Image Upload Support)
+  // 5. Submit Order Handler (Supports Cash & Razorpay UPI)
   const handleOrderSubmit = async (e) => {
     e.preventDefault();
     if (!pickupCoords) {
@@ -211,42 +224,114 @@ const NearbyLoader = () => {
       setErrorMessage("Please select an available loader from the list below to send the request.");
       return;
     }
+    if (calculatedTotalFare <= 0) {
+      setErrorMessage("Invalid calculated fare. Please check distance and loader rates.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage('');
 
     try {
-      // FormData ka use kar rahe hain taaki image bhi backend tak ja sake
-      const formData = new FormData();
-      formData.append('pickup[address]', verifiedPickupName || pickupAddress);
-      formData.append('pickup[location][type]', 'Point');
-      formData.append('pickup[location][coordinates][0]', pickupCoords[0]);
-      formData.append('pickup[location][coordinates][1]', pickupCoords[1]);
+      // Common Payload Generator for FormData
+      const buildFormDataPayload = (paymentInfo = null) => {
+        const formData = new FormData();
+        formData.append('pickup[address]', verifiedPickupName || pickupAddress);
+        formData.append('pickup[location][type]', 'Point');
+        formData.append('pickup[location][coordinates][0]', pickupCoords[0]);
+        formData.append('pickup[location][coordinates][1]', pickupCoords[1]);
 
-      formData.append('drop[address]', verifiedDropName || dropAddress);
-      formData.append('drop[location][type]', 'Point');
-      formData.append('drop[location][coordinates][0]', dropCoords[0]);
-      formData.append('drop[location][coordinates][1]', dropCoords[1]);
+        formData.append('drop[address]', verifiedDropName || dropAddress);
+        formData.append('drop[location][type]', 'Point');
+        formData.append('drop[location][coordinates][0]', dropCoords[0]);
+        formData.append('drop[location][coordinates][1]', dropCoords[1]);
 
-      formData.append('goods[category]', goodsCategory);
-      formData.append('goods[weight_kg]', Number(weightKg));
-      if (goodsPhoto) {
-        formData.append('goods_photo', goodsPhoto); // 👈 Backend mein upload middleware (jaise multer) se handle hoga
+        formData.append('goods[category]', goodsCategory);
+        formData.append('goods[weight_kg]', Number(weightKg));
+        if (goodsPhoto) {
+          formData.append('goods_photo', goodsPhoto); 
+        }
+
+        formData.append('vehicle_type_requested', vehicleType);
+        formData.append('vehicle_id', selectedVehicleId);
+        formData.append('loader_id', selectedLoaderId);
+        formData.append('estimated_fare', calculatedTotalFare);
+        formData.append('payment_method', paymentInfo ? 'upi' : paymentMethod);
+        formData.append('payment_status', paymentInfo ? 'paid' : 'pending');
+        if (paymentInfo) {
+          formData.append('payment_details[razorpay_payment_id]', paymentInfo.razorpay_payment_id);
+          formData.append('payment_details[razorpay_order_id]', paymentInfo.razorpay_order_id);
+          formData.append('payment_details[razorpay_signature]', paymentInfo.razorpay_signature);
+          formData.append('payment_details[status]', 'success');
+        }
+        formData.append('status', 'requested');
+        return formData;
+      };
+
+      // ─── A. CASH FLOW ───
+      if (paymentMethod === 'cash') {
+        await createOrderApi(buildFormDataPayload());
+        navigate('/shop/dashboard');
+        return;
       }
 
-      formData.append('vehicle_type_requested', vehicleType);
-      formData.append('vehicle_id', selectedVehicleId);
-      formData.append('loader_id', selectedLoaderId);
-      formData.append('estimated_fare', calculatedTotalFare);
-      formData.append('payment_method', paymentMethod);
-      formData.append('status', 'requested');
+      // ─── B. RAZORPAY UPI FLOW ───
+      const rzpResponse = await createRazorpayOrderApi({ amount: calculatedTotalFare });
+      const razorpayOrder = rzpResponse?.order || rzpResponse?.data?.order || rzpResponse;
 
-      await createOrderApi(formData);
-      navigate('/shop/dashboard');
+      if (!razorpayOrder || !razorpayOrder.id) {
+        throw new Error('Failed to create Razorpay order from backend.');
+      }
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.');
+      }
+
+      const options = {
+        key: 'rzp_test_TPJSjPgBUk1LNG',
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency || 'INR',
+        name: 'LoadShare Delivery',
+        description: 'Online Payment for Delivery Order',
+        order_id: razorpayOrder.id,
+        handler: async function (response) {
+          try {
+            const paymentDetails = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
+            };
+
+            await createOrderApi(buildFormDataPayload(paymentDetails));
+            navigate('/shop/dashboard');
+          } catch (err) {
+            console.error("Error saving order after payment:", err);
+            setErrorMessage(err.message || 'Payment successful, but failed to save order.');
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          name: shopOwner.name || 'Shop Owner',
+          contact: shopOwner.phone || '9876543210'
+        },
+        theme: {
+          color: '#059669'
+        }
+      };
+
+      const rzpModal = new window.Razorpay(options);
+      rzpModal.on('payment.failed', function (response) {
+        console.error("Payment Failed:", response.error);
+        setErrorMessage(`Payment Failed: ${response.error.description}`);
+        setIsSubmitting(false);
+      });
+
+      setIsSubmitting(false);
+      rzpModal.open(); // 🚀 Razorpay Modal Open
+
     } catch (err) {
       console.error("Order creation failed:", err);
       setErrorMessage(err.response?.data?.message || err.message || 'Failed to create order.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -323,7 +408,6 @@ const NearbyLoader = () => {
             <h4>3. Goods Category, Weight & Photo</h4>
             
             <div className="specs-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-              {/* Goods Category Dropdown */}
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Goods Category</label>
                 <select 
@@ -341,7 +425,6 @@ const NearbyLoader = () => {
                 </select>
               </div>
 
-              {/* Weight (KG) */}
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Weight (KG)</label>
                 <input 
@@ -354,7 +437,6 @@ const NearbyLoader = () => {
               </div>
             </div>
 
-            {/* Goods Photo Upload Section */}
             <div style={{ marginBottom: '15px' }}>
               <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Upload Goods Photo (Optional)</label>
               <input 
@@ -370,7 +452,6 @@ const NearbyLoader = () => {
               )}
             </div>
 
-            {/* Vehicle Type Required */}
             <div>
               <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Vehicle Type Required</label>
               <select value={vehicleType} onChange={handleVehicleTypeChange} className="payment-select" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
@@ -458,13 +539,13 @@ const NearbyLoader = () => {
             <h4>5. Payment Method</h4>
             <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="payment-select" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
               <option value="cash">Cash on Delivery / Pickup (CASH)</option>
-              <option value="upi">UPI / Online Payment</option>
+              <option value="upi">UPI / Online Payment (Razorpay)</option>
             </select>
           </div>
 
           {/* Submit Button */}
           <button type="submit" className="submit-order-btn" disabled={isSubmitting || !selectedLoaderId || !dropCoords} style={{ width: '100%', background: '#059669', color: 'white', border: 'none', padding: '14px', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '20px' }}>
-            {isSubmitting ? 'Sending Request...' : 'Send Request to Loader'}
+            {isSubmitting ? 'Processing...' : paymentMethod === 'upi' ? 'Pay Online & Send Request' : 'Send Request to Loader'}
           </button>
 
         </form>

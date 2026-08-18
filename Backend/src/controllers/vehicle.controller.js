@@ -10,11 +10,12 @@ exports.registerVehicle = async (req, res) => {
             return res.status(403).json({ success: false, message: "Only loaders can register vehicles" });
         }
 
-        // 2. Body se data nikalna
+        // 2. Body se data nikalna (fare_per_km added here)
         const { 
             vehicle_type, 
             registration_number, 
             capacity_kg,
+            fare_per_km,      // 🚀 Added fare_per_km
             current_location,  
             is_available,      
             document_status    
@@ -42,12 +43,13 @@ exports.registerVehicle = async (req, res) => {
             photoUrl = req.file.path.replace(/\\/g, "/"); 
         }
 
-        // 6. Database mein saara data bhejna
+        // 6. Database mein saara data bhejna (fare_per_km added here)
         const newVehicle = await VehicleModel.create({
             loader_id: loaderId,
             vehicle_type,
             registration_number,
             capacity_kg,
+            fare_per_km: fare_per_km ? Number(fare_per_km) : 15, // 🚀 Saved to DB (fallback to 15 if empty)
             current_location: parsedLocation,
             is_available: is_available === 'true' || is_available === true,
             document_status: document_status || 'pending',
@@ -68,7 +70,6 @@ exports.registerVehicle = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 exports.getMyVehicles = async (req, res) => {
     try {
         const loaderId = req.user.id;
