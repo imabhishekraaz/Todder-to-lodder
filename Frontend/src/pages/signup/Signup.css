@@ -1,229 +1,151 @@
-/* Signup.css - Dark Premium Theme */
+/* Signup.css - Modern Enterprise SaaS Theme */
 
-/* Import Fira Sans font from Google */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-* {
-  box-sizing: border-box;
-  /* Apply Fira Sans to everything */
-  font-family: 'Fira Sans', sans-serif; 
-}
-
-/* Very dark background */
-.signup-wrapper {
+.signup-page-wrapper {
   min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0b0f19; /* Deep midnight blue/black */
-  padding: 40px 20px;
-  position: relative;
-  overflow: hidden;
+  padding: 20px;
 }
 
-/* Background glowing effects */
-.glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  z-index: 0;
-}
-
-.orb-1 {
-  width: 300px;
-  height: 300px;
-  background-color: rgba(0, 102, 255, 0.3); /* Blue glow */
-  top: -50px;
-  left: -50px;
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  background-color: rgba(147, 51, 234, 0.15); /* Purple glow */
-  bottom: -100px;
-  right: -100px;
-}
-
-/* Glassmorphism Dark Card */
-.signup-card {
-  background: rgba(22, 27, 40, 0.85); /* Semi-transparent dark box */
-  backdrop-filter: blur(12px); /* Glass blur effect */
+.signup-card-container {
   width: 100%;
-  max-width: 600px;
-  padding: 40px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  z-index: 1; /* Keep above the glow orbs */
-}
-
-/* Text styles */
-.signup-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.signup-title {
-  color: #ffffff;
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.signup-subtitle {
-  color: #94a3b8;
-  margin: 0;
-  font-size: 15px;
-}
-
-/* Message boxes for error and success */
-.message-box {
-  padding: 14px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.error-box {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.success-box {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-/* Form layout */
-.signup-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Grid layout: Puts two inputs side by side on desktop */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-group label {
-  font-size: 14px;
-  color: #cbd5e1; /* Light grey text */
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-/* Dark Input Fields */
-.form-control {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 540px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 15px;
-  color: #ffffff !important; /* Forces typed text color to remain white */
-  background-color: #0f172a !important; /* Forces solid dark background */
-  transition: all 0.3s ease;
+  padding: 36px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.signup-header-box {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.signup-title-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.signup-subtitle-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Alerts */
+.error-alert-box {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.success-alert-box {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Form Stack & Rows */
+.signup-form-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.form-grid-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.input-group-box {
+  display: grid;
+  gap: 6px;
+}
+
+.input-label-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334151;
+}
+
+.form-input-control {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
   outline: none;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-control::placeholder {
-  color: #64748b; /* Muted grey placeholder text */
+.form-input-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Dropdown option colors */
-.form-control option {
+.select-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px auto;
+  padding-right: 30px;
+}
+
+/* Submit Button */
+.submit-signup-btn {
   background-color: #0f172a;
   color: #ffffff;
-}
-
-/* Glowing Neon Focus when clicked */
-.form-control:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.form-control:focus {
-  background-color: #0f172a !important; /* Explicitly keep it dark */
-  color: #ffffff !important;            /* Explicitly keep text white */
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3) !important; /* Electric blue glow */
-  outline: none;
-}
-
-/* Neon Submit Button */
-.signup-button {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: white;
   border: none;
-  border-radius: 10px;
-  padding: 16px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); 
-}
-
-.signup-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6); /* Bigger glow on hover */
-}
-
-.signup-button:disabled {
-  background: #334155;
-  color: #94a3b8;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-/* Bottom login link */
-.login-link-text {
-  text-align: center;
-  margin-top: 25px;
-  font-size: 15px;
-  color: #94a3b8;
-}
-
-.login-link {
-  color: #60a5fa; /* Light blue link */
-  text-decoration: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
-  transition: color 0.2s, text-shadow 0.2s;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background-color 0.2s ease;
 }
 
-.login-link:hover {
-  color: #93c5fd;
-  text-shadow: 0 0 8px rgba(147, 197, 253, 0.5); /* Glowing link text */
+.submit-signup-btn:hover:not(:disabled) {
+  background-color: #1e293b;
 }
 
-/* Responsive Design: Fix for mobile phones */
-@media (max-width: 650px) {
-  .signup-card {
-    padding: 30px 20px;
-  }
-  
-  /* Stack inputs vertically on small screens */
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+.submit-signup-btn:disabled,
+.submit-signup-btn.is-loading {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
 
-  .signup-title {
-    font-size: 26px;
-  }
+/* Footer Link */
+.signin-navigation-text {
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  margin: 24px 0 0 0;
+}
+
+.signin-link-anchor {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signin-link-anchor:hover {
+  text-decoration: underline;
 }

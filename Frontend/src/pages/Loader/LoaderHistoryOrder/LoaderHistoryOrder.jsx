@@ -22,14 +22,12 @@ const LoaderHistoryOrder = () => {
     }
   }, [activeTab]);
 
-  // 1. Load Direct Orders assigned specifically to this loader
   const loadDirectRequests = async () => {
     setIsLoading(true);
     setErrorMessage('');
     try {
       const response = await fetchLoaderDirectOrdersApi();
       const orderList = response.data || response.orders || response || [];
-      
       const pendingOrders = orderList.filter(o => o.status === 'requested' || o.status === 'pending');
       setOrders(pendingOrders);
     } catch (err) {
@@ -40,31 +38,29 @@ const LoaderHistoryOrder = () => {
     }
   };
 
-  // 2. Load Accepted / My Deliveries
   const loadAcceptedOrders = async () => {
     setIsLoading(true);
-    setErrorMessage(''); // 🛠️ FIXED: seterrorMessage ki jagah setErrorMessage kar diya hai
+    setErrorMessage('');
     try {
       const response = await fetchLoaderDirectOrdersApi();
       const orderList = response.data || response.orders || response || [];
       
-      // Active status wale orders jo abhi tak paid nahi hue hain (is_paid === false)
-      const acceptedOrders = orderList.filter(o => {
-        const isActiveStatus = ['accepted', 'in_transit', 'arrived', 'delivered'].includes(o.status);
-        const isNotPaid = o.is_paid === false || o.is_paid === undefined; // fallback for older orders
-        return isActiveStatus && isNotPaid;
+      // 🚀 Yahan delivered aur completed orders ko filter out kar diya gaya hai
+      // Taaki sirf in-progress active orders hi screen par dikhein
+      const activeOrders = orderList.filter(o => {
+        const status = o.status ? o.status.toLowerCase() : '';
+        return ['accepted', 'in_transit', 'arrived', 'loaded'].includes(status);
       });
 
-      setOrders(acceptedOrders);
+      setOrders(activeOrders);
     } catch (err) {
       console.error("Error fetching accepted orders:", err);
-      setErrorMessage(err.message || 'Failed to load accepted orders.');
+      setErrorMessage(err.message || 'Failed to load active orders.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 3. Accept Order Handler
   const handleAcceptOrder = async (orderId) => {
     try {
       await acceptOrderApi(orderId);
@@ -72,18 +68,17 @@ const LoaderHistoryOrder = () => {
       setActiveTab('accepted'); 
     } catch (err) {
       console.error("Error accepting order:", err);
-      setErrorMessage(err.message || 'Failed to accept this order.');
+      setErrorMessage(err.message || 'Failed to accept this assignment.');
     }
   };
 
-  // 4. Reject Order Handler
   const handleRejectOrder = async (orderId) => {
     try {
-      await rejectOrderApi(orderId, 'Rejected by loader');
+      await rejectOrderApi(orderId, 'Rejected by driver partner');
       setOrders(prev => prev.filter(order => order._id !== orderId));
     } catch (err) {
       console.error("Error rejecting order:", err);
-      setErrorMessage(err.message || 'Failed to reject order.');
+      setErrorMessage(err.message || 'Failed to reject assignment.');
     }
   };
 
@@ -93,135 +88,143 @@ const LoaderHistoryOrder = () => {
   };
 
   return (
-    <div className="loader-dashboard-wrapper">
-      <nav className="loader-nav">
-        <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+    <div className="history-page-wrapper">
+      
+      {/* Navbar */}
+      <nav className="history-navbar">
+        <div className="navbar-left-group">
           <button 
-            className="back-btn" 
             onClick={() => navigate('/loader/dashboard')}
-            style={{ background: '#374151', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+            className="back-btn"
           >
-            ← Back
+            Back to Dashboard
           </button>
-          <h2>Vehicle Loader Dashboard 🚚</h2>
+          <h2 className="navbar-heading">Driver Operations Console</h2>
         </div>
-        <div className="nav-user-info" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <span>Welcome, <strong>{loaderUser.name || 'Driver Partner'}</strong></span>
-          <button className="logout-btn" onClick={handleLogout}>Logout 🚪</button>
+        <div className="navbar-right-group">
+          <span className="partner-info-text">Partner: <strong className="partner-name-val">{loaderUser.name || 'Driver Partner'}</strong></span>
+          <button 
+            onClick={handleLogout} 
+            className="logout-action-btn"
+          >
+            Logout
+          </button>
         </div>
       </nav>
 
-      <div className="loader-container">
-        {errorMessage && <div className="alert error-alert" style={{ background: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{errorMessage}</div>}
+      <div className="history-main-container">
+        
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
 
-        {/* Tabs for Direct Requests vs Accepted Orders */}
-        <div className="dashboard-tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        {/* Tab Navigation */}
+        <div className="tab-navigation-bar">
           <button 
-            className={`tab-btn ${activeTab === 'direct' ? 'active' : ''}`}
             onClick={() => setActiveTab('direct')}
-            style={{ padding: '10px 16px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', background: activeTab === 'direct' ? '#2563eb' : '#e2e8f0', color: activeTab === 'direct' ? 'white' : '#334151', border: 'none' }}
+            className={`tab-switch-btn ${activeTab === 'direct' ? 'tab-active' : 'tab-inactive'}`}
           >
-            📥 Direct Requests (Incoming Orders)
+            Direct Assignments
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'accepted' ? 'active' : ''}`}
             onClick={() => setActiveTab('accepted')}
-            style={{ padding: '10px 16px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer', background: activeTab === 'accepted' ? '#2563eb' : '#e2e8f0', color: activeTab === 'accepted' ? 'white' : '#334151', border: 'none' }}
+            className={`tab-switch-btn ${activeTab === 'accepted' ? 'tab-active' : 'tab-inactive'}`}
           >
-            🚀 My Deliveries / Accepted
+            Active Deliveries
           </button>
         </div>
 
-        <div className="orders-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3>{activeTab === 'direct' ? 'Orders Sent Directly To You' : 'Your Accepted Deliveries'}</h3>
-          <button className="refresh-link" onClick={activeTab === 'direct' ? loadDirectRequests : loadAcceptedOrders} style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
-            Refresh 🔄
+        <div className="section-header-row">
+          <h3 className="section-header-title">
+            {activeTab === 'direct' ? 'Pending Direct Requests' : 'In-Progress Active Deliveries'}
+          </h3>
+          <button 
+            onClick={activeTab === 'direct' ? loadDirectRequests : loadAcceptedOrders} 
+            className="refresh-records-btn"
+          >
+            Refresh Records
           </button>
         </div>
 
         {isLoading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Loading orders...</p>
+          <div className="loading-state-box">
+            <p>Retrieving transaction feeds...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="empty-state" style={{ textAlign: 'center', padding: '40px', background: '#f8fafc', borderRadius: '8px' }}>
-            <span className="empty-icon" style={{ fontSize: '32px' }}>📭</span>
-            <h3>No Orders Found</h3>
-            <p>{activeTab === 'direct' ? 'Aapke paas abhi koi nayi order request nahi aayi hai.' : 'Aapne abhi tak koi order accept nahi kiya hai ya sabhi ki payment clear ho chuki hai.'}</p>
+          <div className="empty-state-box">
+            <h4 className="empty-state-title">No Records Available</h4>
+            <p className="empty-state-desc">
+              {activeTab === 'direct' ? 'No incoming order requests currently pending review.' : 'No active deliveries currently in progress.'}
+            </p>
           </div>
         ) : (
-          <div className="orders-grid">
+          <div className="orders-card-grid">
             {orders.map((order) => (
-              <div key={order._id} className="order-card" style={{ background: 'white', padding: '16px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '15px' }}>
-                <div className="order-card-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span className="category-badge" style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
-                    {order.goods?.category || 'General Goods'} ({order.goods?.weight_kg || 0} KG)
-                  </span>
-                  <span className={`status-badge ${order.status}`} style={{ textTransform: 'uppercase', fontWeight: 'bold', fontSize: '12px', color: '#d97706' }}>
+              <div key={order._id} className="order-item-card">
+                
+                <div className="card-top-row">
+                  <div className="card-badge-group">
+                    <span className="category-badge-pill">
+                      {order.goods?.category || 'General Goods'}
+                    </span>
+                    <span className="weight-info-text">Weight: {order.goods?.weight_kg || 0} KG</span>
+                  </div>
+                  <span className="order-status-badge">
                     {order.status ? order.status.replace('_', ' ') : 'REQUESTED'}
                   </span>
                 </div>
 
-                {/* Goods Photo Preview */}
                 {order.goods?.photo_url && (
-                  <div style={{ marginBottom: '10px' }}>
+                  <div className="goods-preview-box">
                     <img 
                       src={`http://localhost:5000/${order.goods.photo_url}`} 
-                      alt="Goods Preview" 
-                      style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} 
+                      alt="Goods Asset Preview" 
+                      className="goods-preview-thumb" 
                     />
                   </div>
                 )}
 
-                <div className="order-route" style={{ marginBottom: '12px' }}>
-                  <div className="route-point pickup" style={{ marginBottom: '6px' }}>
-                    <span style={{ color: '#059669', marginRight: '6px' }}>🟢</span>
-                    <div>
-                      <small style={{ color: '#64748b', fontSize: '11px' }}>PICKUP (SHOP)</small>
-                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '500' }}>{order.pickup?.address || 'N/A'}</p>
-                    </div>
+                <div className="route-details-panel">
+                  <div>
+                    <span className="route-point-label pickup-color">PICKUP LOCATION</span>
+                    <p className="route-address-text">{order.pickup?.address || 'N/A'}</p>
                   </div>
-                  <div className="route-point drop">
-                    <span style={{ color: '#dc2626', marginRight: '6px' }}>🔴</span>
-                    <div>
-                      <small style={{ color: '#64748b', fontSize: '11px' }}>DROP-OFF</small>
-                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '500' }}>{order.drop?.address || 'N/A'}</p>
-                    </div>
+                  <div className="route-point-divider"></div>
+                  <div>
+                    <span className="route-point-label drop-color">DROP-OFF LOCATION</span>
+                    <p className="route-address-text">{order.drop?.address || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="order-specs" style={{ display: 'flex', justifyContent: 'space-between', background: '#f8fafc', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
-                  <div><span>Shop Owner: </span><strong>{order.shop_owner_id?.name || 'N/A'}</strong></div>
-                  <div><span>Estimated Fare: </span><strong style={{ color: '#059669' }}>₹{order.estimated_fare || 0}</strong></div>
+                <div className="card-meta-row">
+                  <span className="meta-label">Merchant: <strong className="meta-value">{order.shop_owner_id?.name || 'N/A'}</strong></span>
+                  <span className="meta-label">Estimated Fare: <strong className="fare-value">₹{order.estimated_fare || 0}</strong></span>
                 </div>
 
-                {/* Accept / Reject Buttons for Direct Requests */}
-                <div className="card-actions" style={{ display: 'flex', gap: '10px' }}>
+                <div className="card-action-row">
                   {activeTab === 'direct' ? (
                     <>
                       <button 
-                        className="accept-btn" 
                         onClick={() => handleAcceptOrder(order._id)}
-                        style={{ flex: 1, background: '#059669', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                        className="accept-assignment-btn"
                       >
-                        Accept Order ✅
+                        Accept Order
                       </button>
                       <button 
-                        className="reject-btn" 
                         onClick={() => handleRejectOrder(order._id)}
-                        style={{ flex: 1, background: '#dc2626', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                        className="decline-assignment-btn"
                       >
-                        Reject / Cancel ❌
+                        Decline
                       </button>
                     </>
                   ) : (
                     <button 
-                      className="details-btn" 
                       onClick={() => navigate('/order-details', { state: { order } })}
-                      style={{ width: '100%', background: '#2563eb', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                      className="manage-fulfillment-btn"
                     >
-                      View Status & Complete 📋
+                      Manage Fulfillment Details
                     </button>
                   )}
                 </div>

@@ -8,18 +8,16 @@ const NearbyLoader = () => {
 
   const shopOwner = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Form States
   const [pickupAddress, setPickupAddress] = useState('');
-  const [pickupCoords, setPickupCoords] = useState(null); // [lng, lat]
+  const [pickupCoords, setPickupCoords] = useState(null); 
   const [verifyingPickup, setVerifyingPickup] = useState(false);
   const [verifiedPickupName, setVerifiedPickupName] = useState('');
   
   const [dropAddress, setDropAddress] = useState('');
-  const [dropCoords, setDropCoords] = useState(null);     // [lng, lat]
+  const [dropCoords, setDropCoords] = useState(null);     
   const [verifyingDrop, setVerifyingDrop] = useState(false);
   const [verifiedDropName, setVerifiedDropName] = useState('');
   
-  // Goods & Photo States
   const [goodsCategory, setGoodsCategory] = useState('General Goods');
   const [weightKg, setWeightKg] = useState(10);
   const [goodsPhoto, setGoodsPhoto] = useState(null); 
@@ -28,7 +26,6 @@ const NearbyLoader = () => {
   const [vehicleType, setVehicleType] = useState('mini_truck');
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
-  // Nearby Loaders States
   const [nearbyLoaders, setNearbyLoaders] = useState([]);
   const [selectedLoaderId, setSelectedLoaderId] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
@@ -39,7 +36,6 @@ const NearbyLoader = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Component load par Razorpay script load karna
   useEffect(() => {
     if (!document.getElementById('razorpay-checkout-script')) {
       const script = document.createElement('script');
@@ -50,7 +46,6 @@ const NearbyLoader = () => {
     }
   }, []);
 
-  // Accurate Road Distance calculation
   const calculateAccurateDistanceKm = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
     const R = 6371;
@@ -64,10 +59,9 @@ const NearbyLoader = () => {
     return Number((R * c * 1.3).toFixed(1)); 
   };
 
-  // 1. Get Live GPS Coordinates for Pickup
   const handleGetPickupGPS = () => {
     if (!navigator.geolocation) {
-      setErrorMessage("Geolocation is not supported by your browser");
+      setErrorMessage("Geolocation is not supported by your browser client.");
       return;
     }
 
@@ -96,16 +90,15 @@ const NearbyLoader = () => {
       },
       (error) => {
         setLoadingLocation(false);
-        setErrorMessage("Unable to retrieve your location. Please check GPS permissions.");
+        setErrorMessage("Unable to retrieve location telemetry. Please check GPS permissions.");
       },
       { enableHighAccuracy: true }
     );
   };
 
-  // Manual Pickup Verify
   const handleVerifyPickupAddress = async () => {
     if (!pickupAddress.trim()) {
-      setErrorMessage("Please enter a pickup address first.");
+      setErrorMessage("Please enter an origin pickup address first.");
       return;
     }
     setVerifyingPickup(true);
@@ -120,19 +113,18 @@ const NearbyLoader = () => {
         setVerifiedPickupName(data[0].display_name);
         fetchNearbyLoaders(lng, lat, vehicleType);
       } else {
-        setErrorMessage("Could not verify pickup address.");
+        setErrorMessage("Could not verify pickup address specifications.");
       }
     } catch (err) {
-      setErrorMessage("Failed to verify pickup address.");
+      setErrorMessage("Failed to verify pickup address coordinates.");
     } finally {
       setVerifyingPickup(false);
     }
   };
 
-  // 2. Verify Drop Address
   const handleVerifyDropAddress = async () => {
     if (!dropAddress.trim()) {
-      setErrorMessage("Please enter a drop address first to verify.");
+      setErrorMessage("Please enter a destination drop-off address to verify.");
       return;
     }
 
@@ -149,16 +141,15 @@ const NearbyLoader = () => {
         setDropCoords([lng, lat]);
         setVerifiedDropName(data[0].display_name);
       } else {
-        setErrorMessage("Could not verify drop address. Please provide a more specific location/landmark.");
+        setErrorMessage("Could not verify destination address. Provide a specific landmark.");
       }
     } catch (err) {
-      setErrorMessage("Failed to verify drop address.");
+      setErrorMessage("Failed to resolve destination drop address.");
     } finally {
       setVerifyingDrop(false);
     }
   };
 
-  // 3. Fetch Nearby Loaders
   const fetchNearbyLoaders = async (lng, lat, selectedType) => {
     if (!lng || !lat) return;
 
@@ -168,7 +159,7 @@ const NearbyLoader = () => {
       setNearbyLoaders(response.data || []);
     } catch (err) {
       console.error("Error fetching nearby loaders:", err);
-      setErrorMessage(err.response?.data?.message || 'Failed to fetch nearby loaders.');
+      setErrorMessage(err.response?.data?.message || 'Failed to scan nearby driver partners.');
       setNearbyLoaders([]);
     } finally {
       setLoadingLoaders(false);
@@ -186,7 +177,6 @@ const NearbyLoader = () => {
     }
   };
 
-  // Handle Photo Selection
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -195,7 +185,6 @@ const NearbyLoader = () => {
     }
   };
 
-  // 4. Select Loader & Vehicle
   const handleSelectLoader = (vehicle) => {
     setSelectedVehicleId(vehicle._id);
     const loaderIdValue = vehicle.loader_id?._id || vehicle.loader_id;
@@ -209,23 +198,22 @@ const NearbyLoader = () => {
     ? Math.max(Math.round(distanceKm * selectedFarePerKm), 50) 
     : 0;
 
-  // 5. Submit Order Handler (Supports Cash & Razorpay UPI)
   const handleOrderSubmit = async (e) => {
     e.preventDefault();
     if (!pickupCoords) {
-      setErrorMessage("Please fetch or verify your pickup location first!");
+      setErrorMessage("Please capture or verify your pickup location first.");
       return;
     }
     if (!dropCoords) {
-      setErrorMessage("Please verify your drop-off address first!");
+      setErrorMessage("Please verify your drop-off destination first.");
       return;
     }
     if (!selectedLoaderId || !selectedVehicleId) {
-      setErrorMessage("Please select an available loader from the list below to send the request.");
+      setErrorMessage("Please select an available driver partner from the active fleet.");
       return;
     }
     if (calculatedTotalFare <= 0) {
-      setErrorMessage("Invalid calculated fare. Please check distance and loader rates.");
+      setErrorMessage("Invalid calculated tariff fare. Please review route distance.");
       return;
     }
 
@@ -233,7 +221,6 @@ const NearbyLoader = () => {
     setErrorMessage('');
 
     try {
-      // Common Payload Generator for FormData
       const buildFormDataPayload = (paymentInfo = null) => {
         const formData = new FormData();
         formData.append('pickup[address]', verifiedPickupName || pickupAddress);
@@ -268,31 +255,29 @@ const NearbyLoader = () => {
         return formData;
       };
 
-      // ─── A. CASH FLOW ───
       if (paymentMethod === 'cash') {
         await createOrderApi(buildFormDataPayload());
         navigate('/shop/dashboard');
         return;
       }
 
-      // ─── B. RAZORPAY UPI FLOW ───
       const rzpResponse = await createRazorpayOrderApi({ amount: calculatedTotalFare });
       const razorpayOrder = rzpResponse?.order || rzpResponse?.data?.order || rzpResponse;
 
       if (!razorpayOrder || !razorpayOrder.id) {
-        throw new Error('Failed to create Razorpay order from backend.');
+        throw new Error('Failed to establish secure Razorpay transaction session.');
       }
 
       if (!window.Razorpay) {
-        throw new Error('Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.');
+        throw new Error('Payment gateway SDK failed to load. Check network configuration.');
       }
 
       const options = {
         key: 'rzp_test_TPJSjPgBUk1LNG',
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency || 'INR',
-        name: 'LoadShare Delivery',
-        description: 'Online Payment for Delivery Order',
+        name: 'GoLoader Enterprise',
+        description: 'Secure Online Freight Escrow Settlement',
         order_id: razorpayOrder.id,
         handler: async function (response) {
           try {
@@ -306,205 +291,216 @@ const NearbyLoader = () => {
             navigate('/shop/dashboard');
           } catch (err) {
             console.error("Error saving order after payment:", err);
-            setErrorMessage(err.message || 'Payment successful, but failed to save order.');
+            setErrorMessage(err.message || 'Payment authorized, but requisition archival failed.');
             setIsSubmitting(false);
           }
         },
         prefill: {
-          name: shopOwner.name || 'Shop Owner',
+          name: shopOwner.name || 'Merchant Partner',
           contact: shopOwner.phone || '9876543210'
         },
         theme: {
-          color: '#059669'
+          color: '#0f172a'
         }
       };
 
       const rzpModal = new window.Razorpay(options);
       rzpModal.on('payment.failed', function (response) {
         console.error("Payment Failed:", response.error);
-        setErrorMessage(`Payment Failed: ${response.error.description}`);
+        setErrorMessage(`Authorization Failed: ${response.error.description}`);
         setIsSubmitting(false);
       });
 
       setIsSubmitting(false);
-      rzpModal.open(); // 🚀 Razorpay Modal Open
+      rzpModal.open();
 
     } catch (err) {
       console.error("Order creation failed:", err);
-      setErrorMessage(err.response?.data?.message || err.message || 'Failed to create order.');
+      setErrorMessage(err.response?.data?.message || err.message || 'Failed to dispatch requisition.');
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="nearby-loader-wrapper">
+      
+      {/* Navbar */}
       <nav className="nearby-loader-navbar">
-        <button className="back-btn" onClick={() => navigate(-1)}>Back</button>
-        <h2>Send Request to Nearby Loader</h2>
+        <div className="nav-brand-group">
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            Back
+          </button>
+          <div className="nav-divider-vertical"></div>
+          <span className="navbar-subtitle">Direct Dispatch Console</span>
+        </div>
+        <h2 className="navbar-heading">Dispatch Requisition to Fleet</h2>
       </nav>
 
       <div className="nearby-loader-container">
-        {errorMessage && <div className="alert error-alert" style={{ background: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{errorMessage}</div>}
+        
+        {errorMessage && (
+          <div className="error-alert-box">
+            <span className="error-dot"></span>
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleOrderSubmit} className="nearby-loader-form">
           
           {/* Pickup Section */}
-          <div className="form-section">
-            <h4>1. Pickup Location</h4>
-            <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
+          <div className="form-section-box">
+            <h3 className="section-title">1. Origin Facility (Pickup)</h3>
+            <div className="input-row-group">
               <input 
                 type="text" 
-                placeholder="Enter pickup address or use GPS..." 
+                placeholder="Enter pickup address or use device GPS telemetry..." 
                 value={pickupAddress}
                 onChange={(e) => setPickupAddress(e.target.value)}
                 required
-                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                className="form-input-control"
               />
-              <button type="button" className="gps-btn" onClick={handleGetPickupGPS} disabled={loadingLocation}>
+              <button type="button" className="action-sub-btn gps-action-btn" onClick={handleGetPickupGPS} disabled={loadingLocation}>
                 {loadingLocation ? 'Locating...' : 'Use GPS'}
               </button>
-              <button type="button" className="gps-btn" style={{ background: '#4f46e5' }} onClick={handleVerifyPickupAddress} disabled={verifyingPickup}>
-                {verifyingPickup ? '...' : 'Verify'}
+              <button type="button" className="action-sub-btn verify-action-btn" onClick={handleVerifyPickupAddress} disabled={verifyingPickup}>
+                {verifyingPickup ? 'Verifying...' : 'Verify'}
               </button>
             </div>
             {verifiedPickupName && (
-              <small style={{ color: '#059669', display: 'block', marginTop: '6px', fontWeight: '600' }}>
-                Verified Pickup: {verifiedPickupName}
-              </small>
+              <span className="verification-status-text synced">
+                Verified Origin: {verifiedPickupName}
+              </span>
             )}
           </div>
 
           {/* Drop Section */}
-          <div className="form-section">
-            <h4>2. Drop-off Location</h4>
-            <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
+          <div className="form-section-box">
+            <h3 className="section-title">2. Destination Facility (Drop-off)</h3>
+            <div className="input-row-group">
               <input 
                 type="text" 
-                placeholder="Enter drop-off destination address..." 
+                placeholder="Enter destination address or specific landmark..." 
                 value={dropAddress}
                 onChange={(e) => setDropAddress(e.target.value)}
                 required
-                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                className="form-input-control"
               />
               <button 
                 type="button" 
-                className="gps-btn" 
-                style={{ background: dropCoords ? '#059669' : '#2563eb' }} 
+                className={`action-sub-btn verify-action-btn ${dropCoords ? 'btn-verified' : ''}`}
                 onClick={handleVerifyDropAddress} 
                 disabled={verifyingDrop}
               >
-                {verifyingDrop ? 'Verifying...' : (dropCoords ? 'Verified' : 'Verify Address')}
+                {verifyingDrop ? 'Verifying...' : (dropCoords ? 'Coordinates Locked' : 'Verify Address')}
               </button>
             </div>
             {verifiedDropName && (
-              <small style={{ color: '#059669', display: 'block', marginTop: '6px', fontWeight: '600' }}>
-                Verified Drop: {verifiedDropName}
-              </small>
+              <span className="verification-status-text synced">
+                Verified Destination: {verifiedDropName}
+              </span>
             )}
           </div>
 
           {/* Goods Specification & Photo Upload */}
-          <div className="form-section">
-            <h4>3. Goods Category, Weight & Photo</h4>
+          <div className="form-section-box">
+            <h3 className="section-title">3. Cargo Specifications & Documentation</h3>
             
-            <div className="specs-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Goods Category</label>
+            <div className="form-grid-layout">
+              <div className="input-group-box">
+                <label className="input-label-title">Goods Category</label>
                 <select 
                   value={goodsCategory} 
                   onChange={(e) => setGoodsCategory(e.target.value)} 
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: 'white' }}
+                  className="form-input-control select-field"
                 >
-                  <option value="General Goods">General Goods</option>
+                  <option value="General Goods">General Freight</option>
                   <option value="Electronics & Appliances">Electronics & Appliances</option>
                   <option value="Furniture & Decor">Furniture & Decor</option>
-                  <option value="Groceries & Vegetables">Groceries & Vegetables</option>
-                  <option value="Hardware & Construction">Hardware & Construction</option>
-                  <option value="Clothing & Textile">Clothing & Textile</option>
-                  <option value="Fragile Items">Fragile Items</option>
+                  <option value="Groceries & Vegetables">Groceries & Perishables</option>
+                  <option value="Hardware & Construction">Hardware & Construction Materials</option>
+                  <option value="Clothing & Textile">Textiles & Apparel</option>
+                  <option value="Fragile Items">Fragile Consignments</option>
                 </select>
               </div>
 
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Weight (KG)</label>
+              <div className="input-group-box">
+                <label className="input-label-title">Gross Weight (KG)</label>
                 <input 
                   type="number" 
                   value={weightKg} 
                   onChange={(e) => setWeightKg(e.target.value)} 
                   required 
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  className="form-input-control"
                 />
+              </div>
+
+              <div className="input-group-box">
+                <label className="input-label-title">Transport Class Required</label>
+                <select value={vehicleType} onChange={handleVehicleTypeChange} className="form-input-control select-field">
+                  <option value="mini_truck">Mini Truck</option>
+                  <option value="tempo">Tempo Unit</option>
+                  <option value="pickup">Pickup Truck</option>
+                  <option value="e_cart">Electric Cart</option>
+                </select>
               </div>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Upload Goods Photo (Optional)</label>
+            <div className="upload-group-box">
+              <label className="input-label-title">Cargo Visual Documentation (Optional)</label>
               <input 
                 type="file" 
                 accept="image/*" 
                 onChange={handlePhotoChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff' }}
+                className="file-input-control"
               />
               {photoPreview && (
-                <div style={{ marginTop: '10px' }}>
-                  <img src={photoPreview} alt="Goods Preview" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                <div className="photo-preview-wrapper">
+                  <img src={photoPreview} alt="Goods Asset Preview" className="preview-thumb-img" />
                 </div>
               )}
-            </div>
-
-            <div>
-              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Vehicle Type Required</label>
-              <select value={vehicleType} onChange={handleVehicleTypeChange} className="payment-select" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                <option value="mini_truck">Mini Truck</option>
-                <option value="tempo">Tempo</option>
-                <option value="pickup">Pickup</option>
-                <option value="e_cart">E-Cart</option>
-              </select>
             </div>
           </div>
 
           {/* Nearby Loaders Selection */}
-          <div className="form-section nearby-section" style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '20px' }}>
-            <h4>4. Select a Loader to Send Request</h4>
+          <div className="form-section-box fleet-selector-box">
+            <h3 className="section-title">4. Select Fleet Operator</h3>
             {!pickupCoords ? (
-              <p className="hint-text" style={{ color: '#d97706', fontSize: '13px', background: '#fef3c7', padding: '10px', borderRadius: '6px' }}>
-                Please verify your pickup location above to see active loaders.
-              </p>
+              <div className="notice-banner-box pending-notice">
+                Please verify your origin pickup location above to scan active driver partners within range.
+              </div>
             ) : loadingLoaders ? (
-              <p>Searching for nearby loaders...</p>
+              <div className="scanning-state-box">
+                Scanning telemetry network for available units...
+              </div>
             ) : nearbyLoaders.length === 0 ? (
-              <p style={{ color: '#ef4444', fontSize: '14px' }}>No active loaders found for this vehicle type within 10km.</p>
+              <div className="notice-banner-box error-notice">
+                No active transport units registered for this vehicle class within the 10km telemetry perimeter.
+              </div>
             ) : (
-              <div className="vehicles-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              <div className="vehicles-grid-list">
                 {nearbyLoaders.map((vehicle) => {
                   const isSelected = selectedVehicleId === vehicle._id;
-                  const loaderName = vehicle.loader_id?.name || 'Delivery Partner';
+                  const loaderName = vehicle.loader_id?.name || 'Driver Partner';
                   const loaderPhone = vehicle.loader_id?.phone || 'N/A';
 
                   return (
                     <div 
                       key={vehicle._id} 
-                      className={`vehicle-card ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSelectLoader(vehicle)}
-                      style={{ 
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                        padding: '14px', border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1', 
-                        borderRadius: '8px', cursor: 'pointer', background: isSelected ? '#eff6ff' : 'white' 
-                      }}
+                      className={`fleet-operator-card ${isSelected ? 'card-selected' : ''}`}
                     >
-                      <div className="vehicle-info">
-                        <strong>{vehicle.vehicle_type.replace('_', ' ').toUpperCase()}</strong> ({vehicle.registration_number})
-                        <br />
-                        <small style={{ color: '#475569' }}>Driver: {loaderName} ({loaderPhone})</small>
+                      <div className="operator-details-stack">
+                        <strong className="operator-vehicle-title">{vehicle.vehicle_type.replace('_', ' ').toUpperCase()}</strong>
+                        <span className="operator-plate-text">Registration: {vehicle.registration_number}</span>
+                        <span className="operator-contact-text">Operator: {loaderName} ({loaderPhone})</span>
                       </div>
-                      <div className="vehicle-pricing" style={{ textAlign: 'right' }}>
-                        <span className="price-tag" style={{ color: '#059669', fontWeight: 'bold', fontSize: '16px' }}>Rs.{vehicle.fare_per_km} / KM</span>
-                        <br />
+                      <div className="operator-pricing-stack">
+                        <span className="operator-fare-rate">₹{vehicle.fare_per_km} / KM</span>
                         <input 
                           type="radio" 
                           checked={isSelected} 
                           onChange={() => handleSelectLoader(vehicle)} 
-                          style={{ marginTop: '4px' }}
+                          className="operator-radio-input"
                         />
                       </div>
                     </div>
@@ -516,37 +512,44 @@ const NearbyLoader = () => {
 
           {/* Fare Breakdown Box */}
           {pickupCoords && dropCoords && selectedVehicleId && selectedFarePerKm > 0 && (
-            <div className="fare-box-section" style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '16px', borderRadius: '8px', marginTop: '20px' }}>
-              <h4 style={{ color: '#065f46', marginBottom: '8px' }}>Trip Estimate & Fare Breakdown</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#047857', marginBottom: '4px' }}>
-                <span>Estimated Road Distance:</span>
+            <div className="fare-breakdown-card">
+              <h4 className="fare-card-heading">Telemetry Route & Fare Breakdown</h4>
+              <div className="fare-row-item">
+                <span>Estimated Road Transit Distance:</span>
                 <strong>{distanceKm} KM</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#047857', marginBottom: '4px' }}>
-                <span>Selected Loader Rate:</span>
-                <strong>Rs.{selectedFarePerKm} / KM</strong>
+              <div className="fare-row-item">
+                <span>Selected Operator Tariff Rate:</span>
+                <strong>₹{selectedFarePerKm} / KM</strong>
               </div>
-              <hr style={{ border: '0', borderTop: '1px solid #a7f3d0', margin: '8px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', color: '#065f46', fontWeight: 'bold' }}>
-                <span>Total Estimated Fare:</span>
-                <span>Rs.{calculatedTotalFare}</span>
+              <div className="fare-divider-line"></div>
+              <div className="fare-row-item total-fare-row">
+                <span>Total Estimated Requisition Fare:</span>
+                <span className="total-fare-value">₹{calculatedTotalFare}</span>
               </div>
             </div>
           )}
 
           {/* Payment Method */}
-          <div className="form-section" style={{ marginTop: '20px' }}>
-            <h4>5. Payment Method</h4>
-            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="payment-select" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-              <option value="cash">Cash on Delivery / Pickup (CASH)</option>
-              <option value="upi">UPI / Online Payment (Razorpay)</option>
+          <div className="form-section-box">
+            <h3 className="section-title">5. Settlement Protocol</h3>
+            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="form-input-control select-field payment-dropdown">
+              <option value="cash">Deferred Cash Settlement (COD)</option>
+              <option value="upi">Online Escrow Settlement (Razorpay UPI)</option>
             </select>
           </div>
 
           {/* Submit Button */}
-          <button type="submit" className="submit-order-btn" disabled={isSubmitting || !selectedLoaderId || !dropCoords} style={{ width: '100%', background: '#059669', color: 'white', border: 'none', padding: '14px', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '20px' }}>
-            {isSubmitting ? 'Processing...' : paymentMethod === 'upi' ? 'Pay Online & Send Request' : 'Send Request to Loader'}
-          </button>
+          <div className="form-submit-panel">
+            <button 
+              type="submit" 
+              disabled={isSubmitting || !selectedLoaderId || !dropCoords} 
+              className={`submit-requisition-btn ${isSubmitting ? 'is-loading' : ''}`}
+            >
+              {isSubmitting ? 'Processing Dispatch...' : paymentMethod === 'upi' ? 'Authorize Escrow & Broadcast Requisition' : 'Broadcast Requisition (Cash Settlement)'}
+            </button>
+            <span className="submit-security-note">Encrypted direct operator dispatch & telemetry verification</span>
+          </div>
 
         </form>
       </div>

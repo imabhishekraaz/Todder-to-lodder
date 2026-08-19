@@ -9,7 +9,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     phone: '',
     password: '',
-    role: 'shop_owner' // Default selection
+    role: 'shop_owner'
   });
   
   const [errorMessage, setErrorMessage] = useState('');
@@ -35,61 +35,64 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.data));
 
-        setSuccessMessage('Login Successful! Redirecting...');
+        setSuccessMessage('Authentication successful. Redirecting workspace...');
         
         setTimeout(() => {
           if (formData.role === 'loader') {
-            // navigate('/loader-dashboard'); 
-            navigate('/loader/dashboard')
-          } else if (formData.role == 'shop_owner') {
-            navigate('/shop/dashboard')
+            navigate('/loader/dashboard');
+          } else if (formData.role === 'shop_owner') {
+            navigate('/shop/dashboard');
           } else {
-            // navigate('/shop-dashboard'); 
-            navigate('/login')
+            navigate('/login');
           }
         }, 1500);
       }
     } catch (error) {
       console.error('Login Error:', error);
-      setErrorMessage(error.message || 'Login failed. Please try again.');
+      setErrorMessage(error.message || 'Authentication failed. Please check credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="login-wrapper">
-      {/* Background glowing orbs */}
-      <div className="glow-orb orb-1"></div>
-      <div className="glow-orb orb-2"></div>
-
-      <div className="login-card">
-        <div className="login-header">
-          <h2 className="login-title">Welcome Back</h2>
-          <p className="login-subtitle">Sign in to your GoLoader account</p>
+    <div className="login-page-wrapper">
+      <div className="login-card-container">
+        
+        <div className="login-header-box">
+          <h2 className="login-title-heading">Welcome Back</h2>
+          <p className="login-subtitle-text">Sign in to your enterprise GoLoader workspace</p>
         </div>
 
-        {errorMessage && <div className="message-box error-box">{errorMessage}</div>}
-        {successMessage && <div className="message-box success-box">{successMessage}</div>}
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
+        {successMessage && (
+          <div className="success-alert-box">
+            {successMessage}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="login-form-stack">
           
-          <div className="input-group">
-            <label htmlFor="role">Login As</label>
+          <div className="input-group-box">
+            <label htmlFor="role" className="input-label-title">Login Designation</label>
             <select
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="form-control"
+              className="form-input-control select-field"
             >
-              <option value="shop_owner">Shop Owner (Send Goods)</option>
-              <option value="loader">Loader (Driver)</option>
+              <option value="shop_owner">Merchant Partner (Send Goods)</option>
+              <option value="loader">Driver Partner (Transport Operator)</option>
             </select>
           </div>
 
-          <div className="input-group">
-            <label htmlFor="phone">Phone Number</label>
+          <div className="input-group-box">
+            <label htmlFor="phone" className="input-label-title">Phone Number</label>
             <input
               type="tel"
               id="phone"
@@ -98,12 +101,12 @@ const Login = () => {
               onChange={handleChange}
               placeholder="+919876543210"
               required
-              className="form-control"
+              className="form-input-control"
             />
           </div>
 
-          <div className="input-group">
-            <label htmlFor="password">Password</label>
+          <div className="input-group-box">
+            <label htmlFor="password" className="input-label-title">Password Credentials</label>
             <input
               type="password"
               id="password"
@@ -112,21 +115,26 @@ const Login = () => {
               onChange={handleChange}
               placeholder="••••••••"
               required
-              className="form-control"
+              className="form-input-control"
             />
           </div>
 
-          <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={`submit-login-btn ${isLoading ? 'is-loading' : ''}`}
+          >
+            {isLoading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
 
-        <p className="signup-link-text">
+        <p className="signup-navigation-text">
           Don't have an account?{' '}
-          <Link to="/signup" className="signup-link">
-            Create one here
+          <Link to="/signup" className="signup-link-anchor">
+            Register here
           </Link>
         </p>
+
       </div>
     </div>
   );

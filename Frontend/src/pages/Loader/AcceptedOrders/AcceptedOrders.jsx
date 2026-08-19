@@ -19,7 +19,7 @@ const AcceptedOrders = () => {
     }
 
     if (user.role !== 'loader') {
-      setErrorMessage('Only loaders can access this page.');
+      setErrorMessage('Access restricted to verified delivery partners.');
       setIsLoading(false);
       return;
     }
@@ -27,14 +27,22 @@ const AcceptedOrders = () => {
     loadAcceptedOrders();
   }, [navigate]);
 
-  console.log(orders)
   const loadAcceptedOrders = async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
       const response = await fetchAcceptedOrdersApi();
-      setOrders(response.data || response || []);
+      const orderList = response.data || response || [];
+      
+      // Filter out orders whose payment has already been cleared (is_paid === true)
+      const activeDeliveries = orderList.filter(o => {
+        const isActiveStatus = ['accepted', 'in_transit', 'arrived', 'delivered'].includes(o.status);
+        const isNotPaid = o.is_paid === false || o.is_paid === undefined;
+        return isActiveStatus && isNotPaid;
+      });
+
+      setOrders(activeDeliveries);
     } catch (error) {
       console.error("Error fetching accepted orders:", error);
       setErrorMessage(error.message || 'Failed to fetch your accepted orders.');
@@ -44,31 +52,34 @@ const AcceptedOrders = () => {
   };
 
   return (
-    <div className="accepted-orders-wrapper">
+    <div className="accepted-wrapper">
       
-      <nav className="orders-navbar">
-        <button className="back-btn-2" onClick={() => navigate('/loader/dashboard')}>
-          ← Back to Dashboard
+      {/* Navbar */}
+      <nav className="accepted-nav">
+        <button className="back-btn" onClick={() => navigate('/loader/dashboard')}>
+          Back to Dashboard
         </button>
-        <h2>My Accepted Deliveries 🚚</h2>
+        <h2 className="nav-title">Active Deliveries Management</h2>
       </nav>
 
-      <div className="orders-container">
+      <div className="accepted-container">
         
-        {errorMessage && <div className="alert error-alert">{errorMessage}</div>}
+        {errorMessage && (
+          <div className="error-alert">
+            {errorMessage}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Loading your accepted orders...</p>
+            <p>Loading active assignments...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">📭</span>
-            <h3>No Accepted Orders Yet</h3>
-            <p>You haven't accepted any delivery requests yet. Check nearby orders to start delivering!</p>
-            <button className="explore-btn" onClick={() => navigate('/loads/active')}>
-              View Nearby Loads 📦
+            <h3>No Active Assignments</h3>
+            <p>You have no pending assignments awaiting financial clearance.</p>
+            <button className="explore-btn" onClick={() => navigate('/orders')}>
+              Explore Available Loads
             </button>
           </div>
         ) : (
@@ -77,49 +88,36 @@ const AcceptedOrders = () => {
               <div key={order._id} className="order-card">
                 
                 <div className="order-card-header">
-                  <span className="category-badge">{order.goods?.category || 'General Goods'}</span>
-                  <span className={`status-badge ${order.status}`}>
-                    {order.status ? order.status.replace('_', ' ').toUpperCase() : 'ACCEPTED'}
+                  <span className="category-badge">
+                    {order.goods?.category || 'General Goods'}
+                  </span>
+                  <span className="status-badge">
+                    {order.status ? order.status.replace('_', ' ') : 'ACCEPTED'}
                   </span>
                 </div>
 
-                <div className="order-route">
-                  <div className="route-point pickup">
-                    <span className="dot-indicator green"></span>
-                    <div>
-                      <small>PICKUP</small>
-                      <p>{order.pickup?.address || 'Pickup Location'}</p>
-                    </div>
+                <div className="route-info">
+                  <div className="route-point">
+                    <span className="route-point-title pickup-title">PICKUP POINT</span>
+                    <p className="route-address">{order.pickup?.address || 'Pickup Location'}</p>
                   </div>
-
-                  <div className="route-line"></div>
-
-                  <div className="route-point drop">
-                    <span className="dot-indicator red"></span>
-                    <div>
-                      <small>DROP-OFF</small>
-                      <p>{order.drop?.address || 'Drop Location'}</p>
-                    </div>
+                  <div className="route-divider">
+                    <span className="route-point-title drop-title">DESTINATION POINT</span>
+                    <p className="route-address">{order.drop?.address || 'Drop Location'}</p>
                   </div>
                 </div>
 
                 <div className="order-specs">
-                  <div className="spec-item">
-                    <span>Weight:</span>
-                    <strong>{order.goods?.weight_kg || 0} KG</strong>
-                  </div>
-                  <div className="spec-item">
-                    <span>Estimated Fare:</span>
-                    <strong className="fare-text">₹{order.estimated_fare || 'N/A'}</strong>
-                  </div>
+                  <span className="spec-item">Weight: <strong className="spec-value">{order.goods?.weight_kg || 0} KG</strong></span>
+                  <span className="spec-item">Estimated Fare: <strong className="fare-value">₹{order.estimated_fare || 'N/A'}</strong></span>
                 </div>
 
-                <div className="card-actions">
+                <div>
                   <button 
-                    className="track-btn" 
-                    onClick={() => navigate('/order-details', { state: { orderId: orders[0]._id } })}
+                    className="details-btn"
+                    onClick={() => navigate('/order-details', { state: { orderId: order._id, order } })}
                   >
-                    View Details & Track 📍
+                    View Details & Track Progress
                   </button>
                 </div>
 

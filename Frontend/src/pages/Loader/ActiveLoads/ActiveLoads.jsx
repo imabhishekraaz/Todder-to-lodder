@@ -22,7 +22,7 @@ const ActiveLoads = () => {
     }
 
     if (user.role !== 'loader') {
-      setErrorMessage('Only loaders can access this page.');
+      setErrorMessage('Access restricted to verified delivery partners.');
       setIsLoading(false);
       return;
     }
@@ -35,32 +35,29 @@ const ActiveLoads = () => {
     setErrorMessage('');
 
     try {
-      // 1. Fetch loader vehicle using separate API function
       const vehicleRes = await getAllVehiclesApi();
       const vehicleData = vehicleRes.data;
 
       if (!vehicleData) {
-        setErrorMessage('You must register a vehicle before viewing or accepting orders.');
+        setErrorMessage('Vehicle registration is required before reviewing available orders.');
         setIsLoading(false);
         return;
       }
       setLoaderVehicle(vehicleData);
       
-
-      // 2. Fetch nearby orders using separate API function
       const ordersRes = await fetchNearbyOrdersApi();
       setLoads(ordersRes.data || []);
     } catch (error) {
       console.error("Initialization error:", error);
-      setErrorMessage(error.message || 'Failed to load data. Please ensure your vehicle is registered.');
+      setErrorMessage(error.message || 'Failed to load active load feeds.');
     } finally {
       setIsLoading(false);
     }
   };
-  console.log(loaderVehicle)
+
   const handleAcceptOrder = async (orderId) => {
-    if (!loaderVehicle || !loaderVehicle[0]._id) {
-      setErrorMessage('No vehicle found. You cannot accept orders without a registered vehicle.');
+    if (!loaderVehicle || !loaderVehicle[0]?._id) {
+      setErrorMessage('No registered vehicle detected. Assignment refused.');
       return;
     }
 
@@ -69,14 +66,13 @@ const ActiveLoads = () => {
     setSuccessMessage('');
 
     try {
-      // Calling separate API function for accepting order
       const response = await acceptOrderApi(orderId, loaderVehicle[0]._id);
       
-      setSuccessMessage(response.message || 'Order accepted successfully!');
+      setSuccessMessage(response.message || 'Order assignment confirmed successfully.');
       setLoads(loads.filter(order => order._id !== orderId));
     } catch (error) {
       console.error("Error accepting order:", error);
-      setErrorMessage(error.message || 'Failed to accept this order.');
+      setErrorMessage(error.message || 'Failed to accept this assignment.');
     } finally {
       setAcceptingId(null);
     }
@@ -85,28 +81,38 @@ const ActiveLoads = () => {
   return (
     <div className="active-loads-wrapper">
       
+      {/* Navbar */}
       <nav className="loads-navbar">
-        <button className="back-btn" onClick={() => navigate('/loader/dashboard')}>
-          ← Back to Dashboard
+        <button 
+          className="back-btn"
+          onClick={() => navigate('/loader/dashboard')}
+        >
+          Back to Dashboard
         </button>
-        <h2>Nearby Active Orders 📦</h2>
+        <h2 className="navbar-title">Nearby Available Loads</h2>
       </nav>
 
       <div className="loads-container">
         
-        {errorMessage && <div className="alert error-alert">{errorMessage}</div>}
-        {successMessage && <div className="alert success-alert">{successMessage}</div>}
+        {errorMessage && (
+          <div className="error-alert">
+            {errorMessage}
+          </div>
+        )}
+        {successMessage && (
+          <div className="success-alert">
+            {successMessage}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Scanning nearby orders matching your vehicle...</p>
+            <p>Scanning matching requests in your zone...</p>
           </div>
         ) : loads.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">📭</span>
-            <h3>No Active Orders Nearby</h3>
-            <p>No matching delivery requests found within your range right now.</p>
+            <h3>No Available Loads Nearby</h3>
+            <p>There are currently no matching delivery requests within range.</p>
           </div>
         ) : (
           <div className="loads-grid">
@@ -114,48 +120,39 @@ const ActiveLoads = () => {
               <div key={order._id} className="load-card">
                 
                 <div className="load-card-header">
-                  <span className="load-type-badge">{order.goods?.category || 'General Goods'}</span>
-                  <span className="load-budget">₹{order.estimated_fare || 'N/A'}</span>
+                  <span className="category-badge">
+                    {order.goods?.category || 'General Goods'}
+                  </span>
+                  <span className="load-fare">
+                    ₹{order.estimated_fare || 'N/A'}
+                  </span>
                 </div>
 
-                <div className="load-route">
-                  <div className="route-point pickup">
-                    <span className="dot-indicator green"></span>
-                    <div>
-                      <small>PICKUP</small>
-                      <p>{order.pickup?.address || 'Pickup Location'}</p>
-                    </div>
+                <div className="route-info-box">
+                  <div className="route-segment">
+                    <span className="route-label pickup-label">PICKUP LOCATION</span>
+                    <p className="route-text">{order.pickup?.address || 'Pickup Location'}</p>
                   </div>
-
-                  <div className="route-line"></div>
-
-                  <div className="route-point drop">
-                    <span className="dot-indicator red"></span>
-                    <div>
-                      <small>DROP-OFF</small>
-                      <p>{order.drop?.address || 'Drop Location'}</p>
-                    </div>
+                  <div className="route-divider">
+                    <span className="route-label drop-label">DESTINATION LOCATION</span>
+                    <p className="route-text">{order.drop?.address || 'Drop Location'}</p>
                   </div>
                 </div>
 
-                <div className="load-specs">
-                  <div className="spec-item">
-                    <span>Weight:</span>
-                    <strong>{order.goods?.weight_kg || 0} KG</strong>
-                  </div>
-                  <div className="spec-item">
-                    <span>Vehicle Needed:</span>
-                    <strong>{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'Any'}</strong>
-                  </div>
+                <div className="load-specs-footer">
+                  <span className="spec-label">Weight: <strong className="spec-value">{order.goods?.weight_kg || 0} KG</strong></span>
+                  <span className="spec-label">Vehicle Class: <strong className="spec-value vehicle-class">{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'Any'}</strong></span>
                 </div>
 
-                <button 
-                  className="accept-btn" 
-                  onClick={() => handleAcceptOrder(order._id)}
-                  disabled={acceptingId === order._id || !loaderVehicle}
-                >
-                  {acceptingId === order._id ? 'Verifying & Accepting...' : 'Accept Order 🚀'}
-                </button>
+                <div>
+                  <button 
+                    onClick={() => handleAcceptOrder(order._id)}
+                    disabled={acceptingId === order._id || !loaderVehicle}
+                    className={`accept-assignment-btn ${acceptingId === order._id ? 'is-loading' : ''}`}
+                  >
+                    {acceptingId === order._id ? 'Processing Assignment...' : 'Accept Assignment'}
+                  </button>
+                </div>
 
               </div>
             ))}

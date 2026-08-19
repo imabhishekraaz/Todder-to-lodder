@@ -26,116 +26,111 @@ const AllVehicles = () => {
     }
   };
 
-  // Toggle Availability Function
   const handleToggle = async (vehicleId, currentStatus) => {
     const newStatus = !currentStatus;
     setUpdatingId(vehicleId);
+    setErrorMessage('');
 
     try {
-      // Optimistic UI update
       setVehicles(vehicles.map(v => v._id === vehicleId ? { ...v, is_available: newStatus } : v));
-
-      // Backend API call
       await updateVehicleAvailabilityApi(vehicleId, newStatus);
     } catch (error) {
       console.error("Failed to update status", error);
-      // Revert if failed
       setVehicles(vehicles.map(v => v._id === vehicleId ? { ...v, is_available: currentStatus } : v));
-      alert('Failed to update vehicle availability.');
+      setErrorMessage('Failed to update vehicle availability status.');
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // Image URL fix karne ka helper function (Windows backslash aur local path fix)
   const getImageUrl = (photoUrl) => {
     if (!photoUrl) return '';
     if (photoUrl.startsWith('http')) return photoUrl;
-    
-    // Backslashes ko forward slashes mein badalna aur leading slash hatana
     const cleanPath = photoUrl.replace(/\\/g, "/").replace(/^\/+/, '');
     return `http://localhost:8000/${cleanPath}`;
   };
 
   return (
-    <div className="vehicles-wrapper">
-      <div className="vehicles-container">
+    <div className="vehicles-page-wrapper">
+      <div className="vehicles-content-container">
         
-        {/* Top Header */}
-        <div className="vehicles-header">
-          <button className="back-button" onClick={() => navigate('/loader/dashboard')}>
-            ← Back to Dashboard
+        <div className="vehicles-nav-section">
+          <button 
+            onClick={() => navigate('/loader/dashboard')}
+            className="back-btn"
+          >
+            Back to Dashboard
           </button>
         </div>
 
-        <div className="title-section">
-          <h2>All System Vehicles 🚚</h2>
-          <p>Complete fleet details registered across the platform.</p>
+        <div className="vehicles-title-box">
+          <h2 className="page-heading">Fleet Management</h2>
+          <p className="page-subheading">Review and manage registered platform transport assets.</p>
         </div>
 
-        {errorMessage && <div className="message-box error-box">{errorMessage}</div>}
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
 
-        {/* Loading State */}
         {isLoading ? (
-          <div className="loading-state">Loading vehicles...</div>
+          <div className="loading-state-box">
+            <p>Loading fleet records...</p>
+          </div>
         ) : vehicles.length === 0 ? (
-          /* Empty State */
-          <div className="empty-state">
-            <p>No vehicles registered in the system yet.</p>
+          <div className="empty-state-box">
+            <p className="empty-text">No vehicles registered in the system database.</p>
           </div>
         ) : (
-          /* Vehicles List Grid/Cards */
-          <div className="vehicles-list">
+          <div className="vehicles-grid-list">
             {vehicles.map((vehicle) => {
               const fullImgUrl = getImageUrl(vehicle.vehicle_photo_url);
 
               return (
-                <div key={vehicle._id} className="vehicle-card">
+                <div key={vehicle._id} className="vehicle-item-card">
                   
-                  {/* Vehicle Photo */}
-                  <div className="vehicle-img-box">
-                    {fullImgUrl ? (
-                      <img src={fullImgUrl} alt="Vehicle" className="vehicle-img" />
-                    ) : (
-                      <div className="placeholder-img">🚛</div>
-                    )}
-                  </div>
-
-                  {/* Vehicle Details */}
-                  <div className="vehicle-info">
-                    <div className="vehicle-type-badge">
-                      {vehicle.vehicle_type ? vehicle.vehicle_type.replace('_', ' ').toUpperCase() : 'VEHICLE'}
+                  <div className="vehicle-left-group">
+                    <div className="vehicle-image-wrapper">
+                      {fullImgUrl ? (
+                        <img src={fullImgUrl} alt="Vehicle Asset" className="vehicle-actual-img" />
+                      ) : (
+                        <span className="vehicle-img-placeholder">ASSET</span>
+                      )}
                     </div>
-                    
-                    <h3 className="reg-number">{vehicle.registration_number}</h3>
-                    <p className="capacity">Capacity: <strong>{vehicle.capacity_kg} KG</strong></p>
-                    
-                    <div className="status-badge-row">
-                      <span className={`status-pill ${vehicle.document_status || 'pending'}`}>
-                        {(vehicle.document_status || 'pending').toUpperCase()}
+
+                    <div>
+                      <span className="vehicle-type-category">
+                        {vehicle.vehicle_type ? vehicle.vehicle_type.replace('_', ' ') : 'VEHICLE'}
                       </span>
+                      <h3 className="vehicle-reg-number">{vehicle.registration_number}</h3>
+                      <span className="vehicle-capacity-text">Capacity: <strong className="capacity-value">{vehicle.capacity_kg} KG</strong></span>
                     </div>
                   </div>
 
-                  {/* Availability Toggle Switch & Location */}
-                  <div className="availability-box">
-                    <span className={`availability-text ${vehicle.is_available ? 'online' : 'offline'}`}>
-                      {vehicle.is_available ? 'Available' : 'Unavailable'}
+                  <div className="vehicle-right-group">
+                    <span className={`document-status-pill ${vehicle.document_status === 'verified' ? 'status-verified' : 'status-pending'}`}>
+                      {vehicle.document_status || 'pending'}
                     </span>
 
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={vehicle.is_available} 
-                        onChange={() => handleToggle(vehicle._id, vehicle.is_available)}
-                        disabled={updatingId === vehicle._id}
-                      />
-                      <span className="slider round"></span>
-                    </label>
+                    <div className="availability-control-box">
+                      <span className={`availability-state-text ${vehicle.is_available ? 'state-available' : 'state-unavailable'}`}>
+                        {vehicle.is_available ? 'Available' : 'Unavailable'}
+                      </span>
 
-                    {/* <span className="location-info">
-                      📍 [{vehicle.current_location?.coordinates?.[0]?.toFixed(2) || 0}, {vehicle.current_location?.coordinates?.[1]?.toFixed(2) || 0}]
-                    </span> */}
+                      <label className="toggle-switch-container">
+                        <input 
+                          type="checkbox" 
+                          checked={vehicle.is_available} 
+                          onChange={() => handleToggle(vehicle._id, vehicle.is_available)}
+                          disabled={updatingId === vehicle._id}
+                          className="toggle-checkbox-input"
+                        />
+                        <span className={`toggle-slider-round ${vehicle.is_available ? 'checked-bg' : ''}`}>
+                          <span className={`toggle-slider-thumb ${vehicle.is_available ? 'checked-pos' : ''}`}></span>
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                 </div>

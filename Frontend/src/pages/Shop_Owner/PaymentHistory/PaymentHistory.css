@@ -1,143 +1,245 @@
+/* PaymentHistory.css - Modern Enterprise SaaS Theme */
+
 .payment-history-wrapper {
   min-height: 100vh;
   background-color: #f8fafc;
-  font-family: 'Outfit', sans-serif;
-  padding-bottom: 40px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
 }
 
+/* Navbar */
 .history-navbar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: #ffffff;
-  padding: 15px 30px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  padding: 16px 36px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
 }
 
-.history-navbar h2 {
-  margin: 0;
-  font-size: 20px;
-  color: #1e293b;
+.nav-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .back-btn {
-  background: #f1f5f9;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #334155;
-  transition: background 0.2s ease;
-}
-
-.back-btn:hover {
-  background: #e2e8f0;
-}
-
-.history-container {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 20px;
-}
-
-.error-alert {
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-weight: 600;
-}
-
-.table-responsive {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  overflow-x: auto;
-}
-
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 14px;
-}
-
-.history-table th {
-  background: #f8fafc;
-  color: #475569;
-  padding: 16px;
-  font-weight: 600;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.history-table td {
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  color: #1e293b;
-}
-
-.clickable-row {
-  cursor: pointer;
-}
-
-.clickable-row:hover {
   background-color: #f1f5f9;
+  color: #334151;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.weight-text {
+.back-btn:hover {
+  background-color: #e2e8f0;
+}
+
+.nav-divider-vertical {
+  width: 1px;
+  height: 20px;
+  background-color: #cbd5e1;
+}
+
+.navbar-subtitle {
+  font-size: 13px;
+  font-weight: 500;
   color: #64748b;
 }
 
-.route-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: #475569;
-  max-width: 250px;
+.navbar-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #0f172a;
 }
 
-.amount-badge {
+/* Container & Alerts */
+.history-container {
+  max-width: 1100px;
+  margin: 36px auto;
+  padding: 0 20px;
+}
+
+.error-alert-box {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.error-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #dc2626;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.loading-banner-box {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* States */
+.loading-state-box {
+  text-align: center;
+  padding: 60px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.empty-state-box {
+  text-align: center;
+  padding: 48px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.empty-state-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.empty-state-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Table Responsive Layout */
+.table-responsive-wrapper {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  overflow-x: auto;
+}
+
+.history-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.history-data-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.history-data-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.clickable-table-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-table-row:hover {
+  background-color: #f8fafc;
+}
+
+.goods-category-text {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.weight-meta-text {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+  margin-top: 2px;
+}
+
+.route-cell-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.route-point-item {
+  font-size: 12px;
+  color: #334151;
+}
+
+.pickup-point {
+  color: #047857;
+}
+
+.drop-point {
+  color: #b91c1c;
+}
+
+.amount-badge-pill {
+  font-size: 14px;
   font-weight: 700;
   color: #059669;
-  font-size: 15px;
 }
 
-.method-badge {
+.method-badge-pill {
+  background-color: #f1f5f9;
+  color: #334151;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 11px;
-  font-weight: 700;
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.status-badge.success {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 50px;
-  background: white;
-  border-radius: 12px;
-  color: #64748b;
   font-weight: 600;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  text-transform: uppercase;
+}
+
+.status-badge-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.status-success {
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.timestamp-cell-text {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
 }

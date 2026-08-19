@@ -1,208 +1,317 @@
+/* ShopPaymentHistory.css - Modern Enterprise SaaS Theme */
+
 .shop-payment-history-wrapper {
   min-height: 100vh;
   background-color: #f8fafc;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
 }
 
+/* Navbar */
 .shop-payment-nav {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: white;
-  padding: 15px 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+  align-items: center;
+  padding: 16px 36px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
 }
 
-.shop-payment-nav h2 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 20px;
+.nav-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .back-btn {
-  background: #f1f5f9;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
+  background-color: #f1f5f9;
+  color: #334151;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 600;
-  color: #475569;
-  transition: background 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .back-btn:hover {
-  background: #e2e8f0;
+  background-color: #e2e8f0;
 }
 
-.shop-payment-container {
-  max-width: 900px;
-  margin: 0 auto;
+.nav-divider-vertical {
+  width: 1px;
+  height: 20px;
+  background-color: #cbd5e1;
 }
 
-.alert.error-alert {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.navbar-subtitle {
+  font-size: 13px;
   font-weight: 500;
-}
-
-.earnings-summary-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  color: white;
-  padding: 24px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
-}
-
-.summary-icon {
-  font-size: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px;
-  border-radius: 12px;
-}
-
-.summary-info span {
-  font-size: 14px;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.summary-info h2 {
-  font-size: 32px;
-  margin: 5px 0;
-  color: #38bdf8;
-}
-
-.summary-info p {
-  margin: 0;
-  font-size: 13px;
-  color: #cbd5e1;
-}
-
-.history-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.history-section-header h3 {
-  margin: 0;
-  color: #334155;
-}
-
-.refresh-btn {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 50px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #2563eb;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.empty-icon {
-  font-size: 48px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.payments-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.payment-card {
-  background: white;
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-  border: 1px solid #e2e8f0;
-  transition: transform 0.2s;
-}
-
-.payment-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.06);
-}
-
-.card-top-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.category-tag {
-  background: #f1f5f9;
-  color: #334155;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-paid-tag {
-  background: #dcfce7;
-  color: #166534;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.route-details-mini p {
-  margin: 4px 0;
-  font-size: 14px;
-  color: #475569;
-}
-
-.card-footer-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 10px;
-  margin-top: 10px;
-  font-size: 13px;
   color: #64748b;
 }
 
-.fare-amount {
-  font-size: 18px;
-  color: #dc2626; /* Expense red color for shop owner */
+.navbar-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #0f172a;
+}
+
+/* Container & Alerts */
+.shop-payment-container {
+  max-width: 1000px;
+  margin: 36px auto;
+  padding: 0 20px;
+}
+
+.error-alert-box {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.error-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #dc2626;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Summary Card */
+.earnings-summary-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.summary-label-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.total-spent-heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.summary-stat-text {
+  font-size: 13px;
+  color: #059669;
+  margin: 0;
+  font-weight: 500;
+}
+
+.refresh-feed-btn {
+  background-color: #f1f5f9;
+  color: #334151;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.refresh-feed-btn:hover {
+  background-color: #e2e8f0;
+}
+
+/* Section Header */
+.section-header-row {
+  margin-bottom: 16px;
+}
+
+.section-title-heading {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* States */
+.loading-state-box {
+  text-align: center;
+  padding: 60px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.empty-state-box {
+  text-align: center;
+  padding: 48px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Payments Grid & Cards */
+.payments-grid-list {
+  display: grid;
+  gap: 16px;
+}
+
+.payment-item-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease;
+}
+
+.payment-item-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+.card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.category-badge-pill {
+  background-color: #f1f5f9;
+  color: #334151;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-reconciled-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+  background-color: #f0fdf4;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Route Panel */
+.route-details-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  background-color: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.route-point-label {
+  font-size: 11px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.pickup-color {
+  color: #059669;
+}
+
+.drop-color {
+  color: #dc2626;
+}
+
+.route-address-text {
+  margin: 0;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.route-point-divider {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 4px;
+}
+
+/* Driver Info Panel */
+.driver-info-panel {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.driver-info-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.info-key {
+  color: #64748b;
+}
+
+.info-val {
+  color: #0f172a;
+}
+
+.vehicle-caps {
+  text-transform: capitalize;
+}
+
+/* Meta Footer */
+.card-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.timestamp-meta-text {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.fare-amount-val {
+  color: #059669;
+  font-size: 16px;
+  font-weight: 700;
 }

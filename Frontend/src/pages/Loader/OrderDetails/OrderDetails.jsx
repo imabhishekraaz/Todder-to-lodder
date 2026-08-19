@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchOrderDetailsApi, completeDeliveryApi } from '../../../api/api'; 
 import './OrderDetails.css';
@@ -25,7 +25,7 @@ const OrderDetails = () => {
     if (orderId && !order) {
       loadOrderDetails(orderId);
     } else if (!orderId && !order) {
-      setErrorMessage('No order ID found.');
+      setErrorMessage('Order identification parameters not found.');
       setIsLoading(false);
     }
   }, [orderId, order, navigate]);
@@ -42,37 +42,35 @@ const OrderDetails = () => {
       if (error.response?.status === 401) {
         navigate('/login');
       } else {
-        setErrorMessage(error.message || 'Failed to load order information.');
+        setErrorMessage(error.message || 'Failed to retrieve shipment specifications.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 🛡️ STRICT OWNER PAYMENT CHECK FOR LOADER BUTTON
   const isOwnerPaid = order?.is_paid === true || order?.payment_status === 'paid' || order?.payment_status === 'success';
 
   const isOrderActive = order?.status === 'accepted' || order?.status === 'ongoing' || order?.status === 'picked_up';
   const isOrderDelivered = order?.status === 'delivered';
   const isOrderCompleted = order?.status === 'completed';
 
-  // Button text, color, and disabled state logic
-  let buttonText = 'Mark as Delivered 📦';
+  let buttonText = 'Mark Shipment as Delivered';
   let isButtonDisabled = isProcessing;
-  let buttonBg = '#d97706'; 
+  let actionBtnClass = 'btn-action-primary';
 
   if (isOrderActive) {
-    buttonText = isProcessing ? 'Processing...' : 'Mark as Delivered 📦';
+    buttonText = isProcessing ? 'Processing Update...' : 'Mark Shipment as Delivered';
     isButtonDisabled = isProcessing;
-    buttonBg = '#d97706';
+    actionBtnClass = 'btn-action-primary';
   } else if (isOrderDelivered && !isOwnerPaid) {
-    buttonText = 'Waiting for Shop Owner Payment ⏳';
-    isButtonDisabled = true; // 🛑 STRICTLY LOCKED until shop owner pays!
-    buttonBg = '#cbd5e1'; // Grey color
+    buttonText = 'Awaiting Merchant Payment Reconciliation';
+    isButtonDisabled = true;
+    actionBtnClass = 'btn-action-disabled';
   } else if (isOrderDelivered && isOwnerPaid) {
-    buttonText = isProcessing ? 'Processing...' : 'Confirm Cash Received & Complete 🎉';
-    isButtonDisabled = isProcessing; // ✅ Unlocked once owner pays
-    buttonBg = '#059669'; // Green color
+    buttonText = isProcessing ? 'Processing Reconciliation...' : 'Confirm Cash Settlement & Close Order';
+    isButtonDisabled = isProcessing;
+    actionBtnClass = 'btn-action-success';
   }
 
   const handleActionButtonClick = async () => {
@@ -84,15 +82,15 @@ const OrderDetails = () => {
       if (isOrderActive) {
         const response = await completeDeliveryApi(order._id, 'mark_delivered');
         setOrder(response.data || response);
-        setSuccessMessage('✅ Order marked as delivered successfully!');
+        setSuccessMessage('Delivery milestone successfully updated.');
       } 
       else if (isOrderDelivered && isOwnerPaid) {
         const response = await completeDeliveryApi(order._id, 'confirm_cash');
         setOrder(response.data || response);
-        setSuccessMessage('🎉 Cash received and order completed successfully!');
+        setSuccessMessage('Cash settlement registered and order closed successfully.');
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to update order status.';
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to update order status parameters.';
       setErrorMessage(errorMsg);
     } finally {
       setIsProcessing(false);
@@ -101,136 +99,139 @@ const OrderDetails = () => {
 
   return (
     <div className="order-details-wrapper">
+      
+      {/* Navbar */}
       <nav className="details-navbar">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          Back
         </button>
-        <h2>Shipment Details 📋</h2>
+        <h2 className="navbar-heading">Shipment Operations Console</h2>
       </nav>
 
       <div className="details-container">
-        {errorMessage && <div className="alert error-alert" style={{ background: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{errorMessage}</div>}
-        {successMessage && <div className="alert success-alert" style={{ background: '#dcfce7', color: '#166534', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{successMessage}</div>}
+        
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
+        {successMessage && (
+          <div className="success-alert-box">
+            {successMessage}
+          </div>
+        )}
 
         {isLoading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Fetching shipment details...</p>
+          <div className="loading-state-box">
+            <p>Retrieving shipment telemetry records...</p>
           </div>
         ) : !order ? (
-          <div className="empty-state">
-            <h3>Order Not Found</h3>
-            <p>The requested order could not be located.</p>
+          <div className="empty-state-box">
+            <h3 className="empty-title">Order Record Not Found</h3>
+            <p className="empty-desc">The requested shipment data could not be located in the database.</p>
           </div>
         ) : (
-          <div className="details-card">
-            <div className="details-header">
+          <div className="details-card-box">
+            
+            <div className="details-card-header">
               <div>
-                <span className="order-id-label">Order ID: #{order._id}</span>
-                <h3>{order.goods?.category || 'General Goods'}</h3>
+                <span className="order-reference-id">Reference ID: #{order._id}</span>
+                <h3 className="order-category-title">{order.goods?.category || 'General Goods'}</h3>
               </div>
-              <span className={`status-pill ${order.status}`}>
+              <span className={`status-badge-pill ${order.status}`}>
                 {order.status ? order.status.replace('_', ' ').toUpperCase() : 'ACCEPTED'}
               </span>
             </div>
 
-            <div className="route-section">
-              <h4>Route Information</h4>
-              <div className="route-box">
-                <div className="route-point pickup">
-                  <span className="dot-indicator green"></span>
+            <div className="section-block">
+              <h4 className="section-block-title">Route Configuration</h4>
+              <div className="route-panel">
+                <div className="route-point-group">
+                  <span className="route-dot pickup-dot"></span>
                   <div>
-                    <small>PICKUP ADDRESS</small>
-                    <p>{order.pickup?.address || 'N/A'}</p>
+                    <span className="route-point-label pickup-text">PICKUP POINT</span>
+                    <p className="route-point-address">{order.pickup?.address || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="route-connector"></div>
+                <div className="route-divider-line"></div>
 
-                <div className="route-point drop">
-                  <span className="dot-indicator red"></span>
+                <div className="route-point-group">
+                  <span className="route-dot drop-dot"></span>
                   <div>
-                    <small>DROP-OFF ADDRESS</small>
-                    <p>{order.drop?.address || 'N/A'}</p>
+                    <span className="route-point-label drop-text">DESTINATION POINT</span>
+                    <p className="route-point-address">{order.drop?.address || 'N/A'}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="specs-section">
-              <h4>Shipment Specifications</h4>
-              <div className="specs-grid">
-                <div className="spec-box">
-                  <span>Goods Category</span>
-                  <strong>{order.goods?.category || 'N/A'}</strong>
+            <div className="section-block">
+              <h4 className="section-block-title">Shipment Specifications</h4>
+              <div className="specs-grid-layout">
+                <div className="spec-item-box">
+                  <span className="spec-key">Goods Category</span>
+                  <strong className="spec-val">{order.goods?.category || 'N/A'}</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Weight</span>
-                  <strong>{order.goods?.weight_kg || 0} KG</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Gross Weight</span>
+                  <strong className="spec-val">{order.goods?.weight_kg || 0} KG</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Vehicle Requested</span>
-                  <strong>{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'N/A'}</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Vehicle Class Requested</span>
+                  <strong className="spec-val vehicle-caps">{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'N/A'}</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Estimated Fare</span>
-                  <strong className="fare-highlight">₹{order.estimated_fare || 'N/A'}</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Estimated Tariff Fare</span>
+                  <strong className="fare-highlight-val">₹{order.estimated_fare || 'N/A'}</strong>
                 </div>
               </div>
             </div>
 
             {/* Payment & Delivery Control Section */}
-            <div className="payment-action-section" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', margin: '20px 0', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Payment & Delivery Control</h4>
-              <p style={{ margin: '0 0 6px 0', fontSize: '14px' }}>
-                Payment Method: <strong>{order.payment_method === 'cash' ? 'CASH ON DELIVERY (COD)' : 'UPI / ONLINE'}</strong>
-              </p>
-              <p style={{ margin: '0 0 15px 0', fontSize: '14px' }}>
-                Shop Owner Payment Status: <strong style={{ color: isOwnerPaid ? '#059669' : '#d97706' }}>
-                  {isOwnerPaid ? '✅ Confirmed / Paid' : '⏳ Pending Confirmation'}
-                </strong>
-              </p>
+            <div className="payment-control-panel">
+              <h4 className="control-panel-heading">Payment & Delivery Control</h4>
+              
+              <div className="control-meta-stack">
+                <span className="control-meta-item">
+                  Payment Method: <strong className="control-meta-strong">{order.payment_method === 'cash' ? 'Cash on Delivery (COD)' : 'UPI / Online Settlement'}</strong>
+                </span>
+                <span className="control-meta-item">
+                  Merchant Payment Status: <strong className={`payment-status-text ${isOwnerPaid ? 'status-paid' : 'status-pending'}`}>
+                    {isOwnerPaid ? 'Confirmed & Reconciled' : 'Pending Confirmation'}
+                  </strong>
+                </span>
+              </div>
 
-              {/* Single Action Button */}
               {!isOrderCompleted ? (
                 <>
                   <button 
-                    className="dynamic-action-btn"
                     onClick={handleActionButtonClick}
                     disabled={isButtonDisabled}
-                    style={{
-                      background: buttonBg,
-                      cursor: isButtonDisabled ? 'not-allowed' : 'pointer',
-                      color: isButtonDisabled ? '#475569' : 'white',
-                      padding: '14px 20px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      width: '100%',
-                      fontSize: '15px'
-                    }}
+                    className={`dynamic-action-trigger-btn ${actionBtnClass}`}
                   >
                     {buttonText}
                   </button>
 
                   {isOrderDelivered && !isOwnerPaid && (
-                    <p style={{ fontSize: '13px', color: '#b45309', marginTop: '10px', textAlign: 'center', lineHeight: '1.4' }}>
-                      ⚠️ Shop owner ne abhi tak payment confirm nahi ki hai. Jab tak owner confirm nahi karta, yeh button locked rahega.
+                    <p className="lockout-warning-text">
+                      Payment confirmation from the merchant partner is pending. Controls remain locked until financial reconciliation is complete.
                     </p>
                   )}
                 </>
               ) : (
-                <div style={{ background: '#dcfce7', padding: '16px', borderRadius: '8px', textAlign: 'center', color: '#166534', fontWeight: 'bold' }}>
-                  🎉 Delivery Completed & Payment Received Successfully!
+                <div className="completion-success-notice">
+                  Delivery milestone successfully completed and payments reconciled.
                 </div>
               )}
             </div>
 
-            <div className="action-footer">
-              <button className="primary-action-btn" onClick={() => navigate('/loader/dashboard')}>
-                Back to Dashboard 🚚
+            <div className="card-footer-action">
+              <button className="back-dashboard-btn" onClick={() => navigate('/loader/dashboard')}>
+                Return to Dashboard
               </button>
             </div>
+
           </div>
         )}
       </div>

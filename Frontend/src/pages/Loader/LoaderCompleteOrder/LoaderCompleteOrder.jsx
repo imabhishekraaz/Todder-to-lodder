@@ -13,17 +13,22 @@ const LoaderCompleteOrder = () => {
 
   if (!order) {
     return (
-      <div className="error-screen">
-        <h3>Order details nahi mili!</h3>
-        <button onClick={() => navigate('/loader/dashboard')}>← Back to Dashboard</button>
+      <div className="error-screen-wrapper">
+        <h3 className="error-screen-title">Order telemetry records not found.</h3>
+        <button 
+          onClick={() => navigate('/loader/dashboard')}
+          className="error-screen-btn"
+        >
+          Back to Dashboard
+        </button>
       </div>
     );
   }
 
-  const shopOwnerName = order.shop_owner_id?.name || order.customer?.name || 'Shop Owner';
+  const shopOwnerName = order.shop_owner_id?.name || order.customer?.name || 'Merchant Partner';
   const shopOwnerPhone = order.shop_owner_id?.phone || order.customer?.phone || 'N/A';
+  const isOwnerPaid = order?.is_paid === true || order?.payment_status === 'paid' || order?.payment_status === 'success';
 
-  // 1. Mark Order as Delivered
   const handleMarkAsDelivered = async () => {
     setIsLoading(true);
     setErrorMessage('');
@@ -33,136 +38,146 @@ const LoaderCompleteOrder = () => {
       setOrder(prev => ({ ...prev, status: 'delivered' }));
     } catch (err) {
       console.error("Error marking delivered:", err);
-      setErrorMessage(err.message || 'Failed to mark as delivered.');
+      setErrorMessage(err.message || 'Failed to update delivery milestone status.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 2. Confirm Payment & Complete
   const handleConfirmPayment = async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
       await updateOrderStatusApi(order._id, 'paid');
-      setOrder(prev => ({ ...prev, payment_status: 'paid' }));
+      setOrder(prev => ({ ...prev, payment_status: 'paid', is_paid: true }));
       navigate('/loader/dashboard');
     } catch (err) {
       console.error("Error confirming payment:", err);
-      setErrorMessage(err.message || 'Failed to confirm payment.');
+      setErrorMessage(err.message || 'Failed to register payment reconciliation.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="complete-order-wrapper">
-      <nav className="complete-nav">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+    <div className="fulfillment-page-wrapper">
+      
+      {/* Navbar */}
+      <nav className="fulfillment-navbar">
+        <button 
+          onClick={() => navigate(-1)}
+          className="back-btn"
+        >
+          Back
         </button>
-        <h2>🚚 Delivery Completion & Details</h2>
+        <h2 className="navbar-heading">Delivery Fulfillment Management</h2>
       </nav>
 
-      <div className="complete-container">
-        {errorMessage && <div className="alert error-alert" style={{ background: '#fee2e2', color: '#991b1b', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{errorMessage}</div>}
+      <div className="fulfillment-main-container">
+        
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
 
-        <div className="status-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span>Status: </span>
-            <strong className={`status-tag ${order.status}`} style={{ textTransform: 'uppercase', color: '#d97706' }}>{order.status}</strong>
-          </div>
-          <div>
-            <span>Payment: </span>
-            <strong style={{ textTransform: 'uppercase', color: order.payment_status === 'paid' ? '#059669' : '#dc2626' }}>
-              {order.payment_status || 'pending'}
-            </strong>
-          </div>
-        </div>
-
-        {/* Shop Owner Information Section */}
-        <div className="detail-section-card">
-          <h3>👤 Shop Owner Information</h3>
-          <div className="info-row">
-            <span>Name:</span>
-            <strong>{shopOwnerName}</strong>
-          </div>
-          <div className="info-row">
-            <span>Phone:</span>
-            <strong>{shopOwnerPhone}</strong>
-          </div>
-        </div>
-
-        {/* Route Details Section */}
-        <div className="detail-section-card">
-          <h3>📍 Route Details</h3>
-          <div className="route-box-view">
-            <div className="point-item">
-              <span className="dot green"></span>
-              <div>
-                <small>PICKUP ADDRESS</small>
-                <p>{order.pickup?.address || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="point-divider"></div>
-            <div className="point-item">
-              <span className="dot red"></span>
-              <div>
-                <small>DROP-OFF ADDRESS</small>
-                <p>{order.drop?.address || 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Goods & Earnings Section */}
-        <div className="detail-section-card">
-          <h3>📦 Goods & Earnings</h3>
-          <div className="info-row">
-            <span>Category:</span>
-            <strong>{order.goods?.category || 'General Goods'}</strong>
-          </div>
-          <div className="info-row">
-            <span>Weight:</span>
-            <strong>{order.goods?.weight_kg || 0} KG</strong>
-          </div>
-          <div className="info-row">
-            <span>Fare to Earn:</span>
-            <strong className="fare-highlight">₹{order.estimated_fare || 0}</strong>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="action-section" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="fulfillment-card-box">
           
-          {order.status !== 'delivered' && (
-            <button 
-              className="mark-completed-btn" 
-              onClick={handleMarkAsDelivered} 
-              disabled={isLoading}
-              style={{ background: '#d97706', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              {isLoading ? 'Processing...' : 'Mark as Delivered 📦'}
-            </button>
-          )}
-
-          {order.status === 'delivered' && order.payment_status !== 'paid' && (
-            <button 
-              className="confirm-payment-btn" 
-              onClick={handleConfirmPayment} 
-              disabled={isLoading}
-              style={{ background: '#059669', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              {isLoading ? 'Processing...' : 'Confirm Cash Received & Complete 🎉'}
-            </button>
-          )}
-
-          {order.status === 'delivered' && order.payment_status === 'paid' && (
-            <div className="already-completed-msg" style={{ textAlign: 'center', background: '#d1fae5', color: '#065f46', padding: '12px', borderRadius: '6px', fontWeight: 'bold' }}>
-              ✓ Order Delivered & Payment Confirmed Successfully!
+          {/* Status Header Banner */}
+          <div className="status-header-banner">
+            <div>
+              <span className="banner-label-text">Fulfillment Milestone: </span>
+              <strong className="status-highlight-pill status-active-tag">
+                {order.status || 'Active'}
+              </strong>
             </div>
-          )}
+            <div>
+              <span className="banner-label-text">Financial Status: </span>
+              <strong className={`status-highlight-pill ${isOwnerPaid ? 'status-paid-tag' : 'status-pending-tag'}`}>
+                {isOwnerPaid ? 'Paid' : 'Pending'}
+              </strong>
+            </div>
+          </div>
+
+          {/* Merchant Contact Section */}
+          <div className="section-block">
+            <h4 className="section-block-title">Merchant Contact</h4>
+            <div className="section-inner-panel">
+              <div className="info-row-item">
+                <span className="info-key">Designation Name:</span>
+                <strong className="info-val">{shopOwnerName}</strong>
+              </div>
+              <div className="info-row-item">
+                <span className="info-key">Contact Number:</span>
+                <strong className="info-val">{shopOwnerPhone}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Route Matrix Section */}
+          <div className="section-block">
+            <h4 className="section-block-title">Route Configuration</h4>
+            <div className="section-inner-panel">
+              <div className="route-point-item">
+                <span className="route-point-label pickup-label">PICKUP POINT</span>
+                <p className="route-point-address">{order.pickup?.address || 'N/A'}</p>
+              </div>
+              <div className="route-point-divider"></div>
+              <div className="route-point-item">
+                <span className="route-point-label drop-label">DESTINATION POINT</span>
+                <p className="route-point-address">{order.drop?.address || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cargo Details Section */}
+          <div className="section-block">
+            <h4 className="section-block-title">Cargo & Financial Specifications</h4>
+            <div className="section-inner-panel">
+              <div className="info-row-item">
+                <span className="info-key">Goods Category:</span>
+                <strong className="info-val category-caps">{order.goods?.category || 'General Goods'}</strong>
+              </div>
+              <div className="info-row-item">
+                <span className="info-key">Gross Weight:</span>
+                <strong className="info-val">{order.goods?.weight_kg || 0} KG</strong>
+              </div>
+              <div className="info-row-item">
+                <span className="info-key">Assigned Tariff Fare:</span>
+                <strong className="fare-amount-val">₹{order.estimated_fare || 0}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Control Interface */}
+          <div>
+            {order.status !== 'delivered' && (
+              <button 
+                onClick={handleMarkAsDelivered} 
+                disabled={isLoading}
+                className={`action-submit-btn ${isLoading ? 'is-loading' : ''}`}
+              >
+                {isLoading ? 'Processing Update...' : 'Mark Shipment as Delivered'}
+              </button>
+            )}
+
+            {order.status === 'delivered' && !isOwnerPaid && (
+              <button 
+                onClick={handleConfirmPayment} 
+                disabled={isLoading}
+                className={`action-payment-btn ${isLoading ? 'is-loading' : ''}`}
+              >
+                {isLoading ? 'Processing Reconciliation...' : 'Confirm Cash Settlement & Close Order'}
+              </button>
+            )}
+
+            {order.status === 'delivered' && isOwnerPaid && (
+              <div className="completion-success-banner">
+                Fulfillment milestone successfully completed and payments reconciled.
+              </div>
+            )}
+          </div>
 
         </div>
       </div>

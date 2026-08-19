@@ -23,7 +23,7 @@ const ShopOrderDetails = () => {
     if (orderId && !order) {
       loadOrderDetails(orderId);
     } else if (!orderId) {
-      setErrorMessage('No order information found.');
+      setErrorMessage('Order identification parameters not found.');
       setIsLoading(false);
     }
   }, [orderId, order]);
@@ -37,7 +37,7 @@ const ShopOrderDetails = () => {
       setOrder(response.data || response);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      setErrorMessage(error.message || 'Failed to load order information.');
+      setErrorMessage(error.message || 'Failed to retrieve shipment tracking data.');
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +48,7 @@ const ShopOrderDetails = () => {
     if (!order?.loader_id?._id && !order?.loader_id) return;
 
     setIsSubmittingRating(true);
+    setErrorMessage('');
     try {
       const loaderId = order.loader_id._id || order.loader_id;
       await rateLoaderApi({
@@ -62,15 +63,15 @@ const ShopOrderDetails = () => {
         is_rated: true
       }));
     } catch (err) {
-      alert(err.message || 'Failed to submit rating.');
+      setErrorMessage(err.message || 'Failed to submit operator evaluation.');
     } finally {
       setIsSubmittingRating(false);
     }
   };
 
-  // 🚀 Shop Owner Cash Payment Confirmation Handler
   const handlePaymentConfirm = async () => {
     setIsUpdatingPayment(true);
+    setErrorMessage('');
     try {
       await updatePaymentStatusApi(order._id, { payment_status: 'paid' });
       
@@ -78,15 +79,13 @@ const ShopOrderDetails = () => {
         ...prevOrder,
         payment_status: 'paid'
       }));
-      alert('Payment confirmed successfully! Now delivery partner can receive cash.');
     } catch (err) {
-      alert(err.message || 'Failed to update payment status.');
+      setErrorMessage(err.message || 'Failed to update financial reconciliation status.');
     } finally {
       setIsUpdatingPayment(false);
     }
   };
 
-  // 🚀 Helper functions for accurate payment checks & displays
   const isOnlinePayment = () => {
     return (
       order.payment_method === 'upi' || 
@@ -102,194 +101,210 @@ const ShopOrderDetails = () => {
   };
 
   const getPaymentMethodDisplay = () => {
-    if (order.payment_method === 'cash') return 'CASH / COD';
-    if (isOnlinePayment()) return 'UPI / ONLINE';
-    return order.payment_method ? order.payment_method.toUpperCase() : 'CASH';
+    if (order.payment_method === 'cash') return 'Deferred Cash Settlement (COD)';
+    if (isOnlinePayment()) return 'Online Escrow Settlement (UPI)';
+    return order.payment_method ? order.payment_method.toUpperCase() : 'Deferred Cash Settlement';
   };
 
   const getPaymentStatusDisplay = () => {
-    if (order.status === 'cancelled' && isOnlinePayment()) return 'REFUND INITIATED';
-    if (isPaymentPaid()) return 'PAID ✓';
-    return 'PENDING ⏳';
+    if (order.status === 'cancelled' && isOnlinePayment()) return 'Refund Initiated';
+    if (isPaymentPaid()) return 'Confirmed & Reconciled';
+    return 'Pending Reconciliation';
   };
 
   return (
     <div className="shop-order-details-wrapper">
+      
+      {/* Navbar */}
       <nav className="details-navbar">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back to Dashboard
-        </button>
-        <h2>Order Status & Tracking 📦</h2>
+        <div className="nav-brand-group">
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            Back
+          </button>
+          <div className="nav-divider-vertical"></div>
+          <span className="navbar-subtitle">Logistics Telemetry</span>
+        </div>
+        <h2 className="navbar-heading">Shipment Status & Tracking Console</h2>
       </nav>
 
       <div className="details-container">
-        {errorMessage && <div className="alert error-alert">{errorMessage}</div>}
+        
+        {errorMessage && (
+          <div className="error-alert-box">
+            <span className="error-dot"></span>
+            {errorMessage}
+          </div>
+        )}
 
         {isLoading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Fetching order details...</p>
+          <div className="loading-state-box">
+            <p>Retrieving shipment telemetry records...</p>
           </div>
         ) : !order ? (
-          <div className="empty-state">
-            <h3>Order Not Found</h3>
-            <p>The requested order could not be located.</p>
+          <div className="empty-state-box">
+            <h3 className="empty-title">Order Record Not Found</h3>
+            <p className="empty-desc">The requested requisition could not be located in the database.</p>
           </div>
         ) : (
-          <div className="details-card">
+          <div className="details-card-box">
             
-            <div className="details-header">
+            <div className="details-card-header">
               <div>
-                <span className="order-id-label">Order ID: #{order._id}</span>
-                <h3>{order.goods?.category || 'General Goods'}</h3>
+                <span className="order-reference-id">Reference ID: #{order._id}</span>
+                <h3 className="order-category-title">{order.goods?.category || 'General Freight'}</h3>
               </div>
-              <span className={`status-pill ${order.status}`}>
+              <span className={`status-badge-pill ${order.status}`}>
                 {order.status ? order.status.replace('_', ' ').toUpperCase() : 'REQUESTED'}
               </span>
             </div>
 
             {/* Cancelled vs Loader Assigned vs Waiting */}
             {order.status === 'cancelled' ? (
-              <div className="cancelled-info-card" style={{ background: '#fee2e2', padding: '16px', borderRadius: '8px', margin: '20px 0', color: '#991b1b' }}>
-                <p><strong> This order has been cancelled.</strong></p>
+              <div className="cancelled-notification-box">
+                <p className="cancelled-main-text">This freight requisition has been cancelled.</p>
                 {isOnlinePayment() ? (
-                  <p style={{ marginTop: '6px', fontSize: '14px', fontWeight: '600' }}>
-                     Online payment detected. Your refund of ₹{order.estimated_fare} has been initiated to your source account (5-7 business days).
+                  <p className="cancelled-sub-text">
+                    Online escrow payment detected. Your refund of ₹{order.estimated_fare} has been initiated to your source account (processed within 5-7 business days).
                   </p>
                 ) : (
-                  <p style={{ marginTop: '6px', fontSize: '13px', fontWeight: '500' }}>
-                    This was a cash order. No online payment was made, so no refund is required.
+                  <p className="cancelled-sub-text">
+                    This was a deferred cash requisition. No online transaction escrow was created.
                   </p>
                 )}
               </div>
             ) : order.loader_id ? (
-              <div className="loader-info-card">
-                <div className="loader-header-info">
-                  <span className="loader-icon">🚚</span>
-                  <div>
-                    <small>ASSIGNED DELIVERY PARTNER</small>
-                    <h4>{order.loader_id.name || 'N/A'}</h4>
-                  </div>
+              <div className="assigned-partner-box">
+                <div className="partner-info-stack">
+                  <span className="partner-box-label">ASSIGNED TRANSPORT OPERATOR</span>
+                  <h4 className="partner-name-heading">{order.loader_id.name || 'N/A'}</h4>
+                  <span className="partner-phone-text">Phone: {order.loader_id.phone || 'N/A'}</span>
                 </div>
-                <div className="loader-contact">
-                  <span>📞 {order.loader_id.phone || 'N/A'}</span>
-                  <a href={`tel:${order.loader_id.phone}`} className="call-btn">
-                    Call Partner
+                <div className="partner-contact-stack">
+                  <a href={`tel:${order.loader_id.phone}`} className="operator-call-btn">
+                    <span className="phone-icon">📞</span> Call Driver Partner
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="pending-loader-card">
-                <p>⏳ Waiting for a delivery partner to accept your order...</p>
+              <div className="pending-queue-banner">
+                Awaiting fleet operator acceptance across the telemetry perimeter...
               </div>
             )}
 
-            <div className="route-section">
-              <h4>Route Information</h4>
-              <div className="route-box">
-                <div className="route-point pickup">
-                  <span className="dot-indicator green"></span>
+            <div className="section-block">
+              <h4 className="section-block-title">Route Configuration</h4>
+              <div className="route-panel">
+                <div className="route-point-group">
+                  <span className="route-dot pickup-dot"></span>
                   <div>
-                    <small>PICKUP ADDRESS</small>
-                    <p>{order.pickup?.address || 'N/A'}</p>
+                    <span className="route-point-label pickup-text">ORIGIN POINT</span>
+                    <p className="route-point-address">{order.pickup?.address || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="route-connector"></div>
+                <div className="route-divider-line"></div>
 
-                <div className="route-point drop">
-                  <span className="dot-indicator red"></span>
+                <div className="route-point-group">
+                  <span className="route-dot drop-dot"></span>
                   <div>
-                    <small>DROP-OFF ADDRESS</small>
-                    <p>{order.drop?.address || 'N/A'}</p>
+                    <span className="route-point-label drop-text">DESTINATION POINT</span>
+                    <p className="route-point-address">{order.drop?.address || 'N/A'}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="specs-section">
-              <h4>Order Specifications</h4>
-              <div className="specs-grid">
-                <div className="spec-box">
-                  <span>Goods Category</span>
-                  <strong>{order.goods?.category || 'N/A'}</strong>
+            <div className="section-block">
+              <h4 className="section-block-title">Shipment Specifications</h4>
+              <div className="specs-grid-layout">
+                <div className="spec-item-box">
+                  <span className="spec-key">Goods Category</span>
+                  <strong className="spec-val">{order.goods?.category || 'N/A'}</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Weight</span>
-                  <strong>{order.goods?.weight_kg || 0} KG</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Gross Weight</span>
+                  <strong className="spec-val">{order.goods?.weight_kg || 0} KG</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Vehicle Requested</span>
-                  <strong>{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'N/A'}</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Transport Class</span>
+                  <strong className="spec-val vehicle-caps">{order.vehicle_type_requested ? order.vehicle_type_requested.replace('_', ' ') : 'N/A'}</strong>
                 </div>
-                <div className="spec-box">
-                  <span>Estimated Fare</span>
-                  <strong className="fare-highlight">₹{order.estimated_fare || 'N/A'}</strong>
+                <div className="spec-item-box">
+                  <span className="spec-key">Estimated Tariff Fare</span>
+                  <strong className="fare-highlight-val">₹{order.estimated_fare || 'N/A'}</strong>
                 </div>
               </div>
             </div>
 
             {/* Payment Details Section */}
-            <div className="payment-section-card" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', margin: '20px 0' }}>
-              <h4>Payment Details</h4>
-              <p>Payment Method: <strong>{getPaymentMethodDisplay()}</strong></p>
-              <p>Status: <strong style={{ color: getPaymentStatusDisplay().includes('PAID') ? '#059669' : '#d97706' }}>
-                {getPaymentStatusDisplay()}
-              </strong></p>
+            <div className="payment-control-panel">
+              <h4 className="control-panel-heading">Financial Reconciliation</h4>
               
-              {/* Cash confirmation button sirf tab dikhega jab order cash ho aur payment paid na ho */}
+              <div className="control-meta-stack">
+                <span className="control-meta-item">
+                  Settlement Protocol: <strong className="control-meta-strong">{getPaymentMethodDisplay()}</strong>
+                </span>
+                <span className="control-meta-item">
+                  Reconciliation Status: <strong className={`payment-status-text ${isPaymentPaid() ? 'status-paid' : 'status-pending'}`}>
+                    {getPaymentStatusDisplay()}
+                  </strong>
+                </span>
+              </div>
+              
               {order.status !== 'cancelled' && 
                order.payment_method === 'cash' && 
                !isPaymentPaid() && (
                 <button 
-                  className="pay-confirm-btn" 
+                  className="dynamic-action-trigger-btn btn-action-success"
                   onClick={handlePaymentConfirm} 
                   disabled={isUpdatingPayment}
-                  style={{ background: '#059669', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', marginTop: '10px', fontWeight: 'bold' }}
                 >
-                  {isUpdatingPayment ? 'Updating...' : 'Confirm Cash Paid / COD Received 💵'}
+                  {isUpdatingPayment ? 'Processing Reconciliation...' : 'Confirm Cash Settlement / COD Received'}
                 </button>
               )}
 
               {isPaymentPaid() && order.payment_method === 'cash' && (
-                <p style={{ color: '#059669', fontWeight: '600', marginTop: '8px' }}>
-                  ✅ Payment Confirmed by Owner.
-                </p>
+                <div className="completion-success-notice">
+                  Financial settlement successfully verified and reconciled by merchant partner.
+                </div>
               )}
             </div>
 
             {/* Rating Section */}
             {order.status !== 'cancelled' && (order.status === 'delivered' || order.status === 'completed') && (
-              <div className="rating-section-card" style={{ background: '#fef3c7', padding: '20px', borderRadius: '8px', margin: '20px 0' }}>
-                <h4>⭐ Rate Your Delivery Partner</h4>
+              <div className="rating-control-panel">
+                <h4 className="rating-panel-heading">Operator Evaluation & Review</h4>
                 {order.is_rated ? (
-                  <p>✅ You have already rated this delivery.</p>
+                  <div className="rating-submitted-notice">
+                    Performance evaluation successfully submitted for this assignment.
+                  </div>
                 ) : (
-                  <form onSubmit={handleRatingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                    <div>
-                      <label>Rating (1 to 5): </label>
-                      <select value={rating} onChange={(e) => setRating(e.target.value)} style={{ padding: '6px', borderRadius: '4px' }}>
-                        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-                        <option value="4">⭐⭐⭐⭐ (4)</option>
-                        <option value="3">⭐⭐⭐ (3)</option>
-                        <option value="2">⭐⭐ (2)</option>
-                        <option value="1">⭐ (1)</option>
+                  <form onSubmit={handleRatingSubmit} className="rating-form-stack">
+                    <div className="input-group-box">
+                      <label className="input-label-title">Performance Rating Scale (1 to 5 Stars)</label>
+                      <select value={rating} onChange={(e) => setRating(e.target.value)} className="form-input-control select-field">
+                        <option value="5">5 Stars - Exceptional Service</option>
+                        <option value="4">4 Stars - Professional Execution</option>
+                        <option value="3">3 Stars - Satisfactory</option>
+                        <option value="2">2 Stars - Below Standard</option>
+                        <option value="1">1 Star - Unsatisfactory</option>
                       </select>
                     </div>
-                    <div>
+                    <div className="input-group-box">
+                      <label className="input-label-title">Operational Review (Optional)</label> 
                       <textarea 
-                        placeholder="Write a short review (optional)..." 
+                        placeholder="Provide detailed feedback regarding transport execution..." 
                         value={review} 
                         onChange={(e) => setReview(e.target.value)}
-                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                        className="form-input-control review-textarea"
                       />
                     </div>
                     <button 
                       type="submit" 
                       disabled={isSubmittingRating}
-                      style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+                      className="submit-evaluation-btn"
                     >
-                      {isSubmittingRating ? 'Submitting...' : 'Submit Rating & Review'}
+                      {isSubmittingRating ? 'Transmitting Evaluation...' : 'Submit Operator Evaluation'}
                     </button>
                   </form>
                 )}
@@ -297,15 +312,15 @@ const ShopOrderDetails = () => {
             )}
 
             {order.status_history && order.status_history.length > 0 && (
-              <div className="history-section">
-                <h4>Status Timeline</h4>
-                <div className="timeline-list">
+              <div className="section-block timeline-section">
+                <h4 className="section-block-title">Telemetry Status Timeline</h4>
+                <div className="timeline-list-stack">
                   {order.status_history.map((historyItem, index) => (
-                    <div key={index} className="timeline-item">
-                      <span className="timeline-dot"></span>
-                      <div className="timeline-content">
-                        <strong>{historyItem.status.replace('_', ' ').toUpperCase()}</strong>
-                        <small>{new Date(historyItem.timestamp).toLocaleString()}</small>
+                    <div key={index} className="timeline-item-row">
+                      <span className="timeline-bullet-point"></span>
+                      <div className="timeline-content-stack">
+                        <strong className="timeline-status-text">{historyItem.status.replace('_', ' ').toUpperCase()}</strong>
+                        <small className="timeline-timestamp-text">{new Date(historyItem.timestamp).toLocaleString()}</small>
                       </div>
                     </div>
                   ))}
@@ -313,9 +328,9 @@ const ShopOrderDetails = () => {
               </div>
             )}
 
-            <div className="action-footer">
-              <button className="primary-action-btn" onClick={() => navigate('/shop/dashboard')}>
-                Back to Dashboard 🏪
+            <div className="card-footer-action">
+              <button className="back-dashboard-btn" onClick={() => navigate('/shop/dashboard')}>
+                Return to Merchant Dashboard
               </button>
             </div>
 

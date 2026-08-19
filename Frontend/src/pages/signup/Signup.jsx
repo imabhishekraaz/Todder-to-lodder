@@ -6,12 +6,11 @@ import './Signup.css';
 const Signup = () => {
   const navigate = useNavigate();
   
-  // State for form data (photo url removed)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     password: '',
-    role: 'loader', // Default role
+    role: 'loader', 
     email: ''
   });
   
@@ -19,14 +18,12 @@ const Signup = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Update state when user types in the inputs
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrorMessage(''); 
     setSuccessMessage('');
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -34,86 +31,89 @@ const Signup = () => {
     setSuccessMessage('');
 
     try {
-      // Send data to backend API
       const data = await registerUser(formData);
 
       if (data.success) {
-        setSuccessMessage('Account created successfully! Redirecting to Login...');
+        setSuccessMessage('Account registered successfully. Redirecting to authentication console...');
         
-        // Wait 1.5 seconds, then go to login page
         setTimeout(() => {
           navigate('/login');
         }, 1500);
       }
     } catch (error) {
       console.error('Signup Error:', error);
-      setErrorMessage(error.message || 'Signup failed. Please try again.');
+      setErrorMessage(error.message || 'Registration failed. Please check credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="signup-wrapper">
-      {/* Background glowing effects */}
-      <div className="glow-orb orb-1"></div>
-      <div className="glow-orb orb-2"></div>
-
-      <div className="signup-card">
-        <div className="signup-header">
-          <h2 className="signup-title">Create Account</h2>
-          <p className="signup-subtitle">Join GoLoader to manage your logistics</p>
+    <div className="signup-page-wrapper">
+      <div className="signup-card-container">
+        
+        <div className="signup-header-box">
+          <h2 className="signup-title-heading">Create Account</h2>
+          <p className="signup-subtitle-text">Join GoLoader to manage enterprise logistics operations</p>
         </div>
 
-        {/* Show error or success messages */}
-        {errorMessage && <div className="message-box error-box">{errorMessage}</div>}
-        {successMessage && <div className="message-box success-box">{successMessage}</div>}
+        {errorMessage && (
+          <div className="error-alert-box">
+            {errorMessage}
+          </div>
+        )}
+        {successMessage && (
+          <div className="success-alert-box">
+            {successMessage}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="signup-form">
+        <form onSubmit={handleSubmit} className="signup-form-stack">
           
-          {/* Row 1: Role and Name */}
-          <div className="form-row">
-            <div className="input-group">
-              <label htmlFor="role">I am a</label>
-              <select id="role" name="role" value={formData.role} onChange={handleChange} className="form-control">
-                <option value="loader">Loader (Driver)</option>
-                <option value="shop_owner">Shop Owner (Send Goods)</option>
+          <div className="form-grid-row">
+            <div className="input-group-box">
+              <label htmlFor="role" className="input-label-title">Registration Designation</label>
+              <select id="role" name="role" value={formData.role} onChange={handleChange} className="form-input-control select-field">
+                <option value="loader">Driver Partner (Transport Operator)</option>
+                <option value="shop_owner">Merchant Partner (Send Goods)</option>
               </select>
             </div>
 
-            <div className="input-group">
-              <label htmlFor="name">Full Name</label>
-              <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Rahul Verma" required className="form-control" />
+            <div className="input-group-box">
+              <label htmlFor="name" className="input-label-title">Full Name</label>
+              <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Rahul Verma" required className="form-input-control" />
             </div>
           </div>
 
-          {/* Row 2: Email and Phone */}
-          <div className="form-row">
-            <div className="input-group">
-              <label htmlFor="email">Email Address (Optional)</label>
-              <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} placeholder="rahul@example.com" className="form-control" />
+          <div className="form-grid-row">
+            <div className="input-group-box">
+              <label htmlFor="email" className="input-label-title">Email Address (Optional)</label>
+              <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} placeholder="rahul@example.com" className="form-input-control" />
             </div>
 
-            <div className="input-group">
-              <label htmlFor="phone">Phone Number</label>
-              <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+919876543210" required className="form-control" />
+            <div className="input-group-box">
+              <label htmlFor="phone" className="input-label-title">Phone Number</label>
+              <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+919876543210" required className="form-input-control" />
             </div>
           </div>
 
-          {/* Password (Full width) */}
-          <div className="input-group">
-            <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" value={formData.password} onChange={handleChange} placeholder="Create a strong password" required className="form-control" />
+          <div className="input-group-box">
+            <label htmlFor="password" className="input-label-title">Password Credentials</label>
+            <input type="password" id="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" required className="form-input-control" />
           </div>
 
-          <button type="submit" className="signup-button" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className={`submit-signup-btn ${isLoading ? 'is-loading' : ''}`}
+          >
+            {isLoading ? 'Registering Account...' : 'Create Account'}
           </button>
         </form>
 
-        <p className="login-link-text">
+        <p className="signin-navigation-text">
           Already have an account?{' '}
-          <Link to="/login" className="login-link">Sign In</Link>
+          <Link to="/login" className="signin-link-anchor">Sign In</Link>
         </p>
 
       </div>

@@ -297,13 +297,11 @@ export const markOrderAsDeliveredApi = async (orderId) => {
 export const fetchLoaderPaymentHistoryApi = async () => {
   try {
     const token = localStorage.getItem('token');
-    console.log("🚀 API function called! Token:", token ? "Present" : "Missing");
 
     const response = await API.get('/payments/loader/payments', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    console.log("📦 RAW Response from Backend:", response);
     return response.data;
   } catch (error) {
     console.error("❌ API Catch Error:", error);

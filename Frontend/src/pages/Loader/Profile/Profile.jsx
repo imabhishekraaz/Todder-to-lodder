@@ -16,48 +16,74 @@ const Profile = () => {
         navigate('/login');
     };
 
-    if (!user) return <div className="loading">Loading...</div>;
+    if (!user) {
+        return (
+            <div className="profile-loading-screen">
+                <p>Loading profile information...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="profile-page-container">
+        <div className="profile-page-wrapper">
             <div className="profile-main-layout">
                 
-                {/* Back Button Added Here */}
+                {/* Back Button */}
                 <button className="back-nav-btn" onClick={() => navigate('/loader/dashboard')}>
-                    ← Dashboard
+                    Back to Dashboard
                 </button>
 
                 <div className="profile-sidebar">
                     <div className="avatar-section">
                         <img 
                             src={user.profile_photo_url || `https://ui-avatars.com/api/?name=${user.name}&background=random`} 
-                            alt="Profile" 
+                            alt="Profile Avatar" 
+                            className="profile-avatar-img"
                         />
-                        <h2 className="profile-name">{user.name}</h2>
-                        <span className="role-badge">{user.role.replace('_', ' ')}</span>
+                        <h2 className="profile-name-heading">{user.name}</h2>
+                        <span className="role-badge-pill">{user.role ? user.role.replace('_', ' ') : 'User'}</span>
                     </div>
 
                     <button className="btn-logout desktop-logout" onClick={handleLogout}>
-                        Logout
+                        Logout Session
                     </button>
                 </div>
 
-                <div className="profile-content">
-                    <div className="content-header">
-                        <h3>Account Information</h3>
+                <div className="profile-content-area">
+                    <div className="content-header-box">
+                        <h3 className="content-heading">Account Information</h3>
                     </div>
 
                     <div className="user-info-grid">
-                        <div className="info-box"><label>Phone Number</label> <span>{user.phone}</span></div>
-                        <div className="info-box"><label>Email Address</label> <span>{user.email || 'Not Provided'}</span></div>
-                        <div className="info-box"><label>Account Status</label> <span>{user.is_verified ? 'Verified ✅' : 'Pending ⏳'}</span></div>
-                        <div className="info-box"><label>Avg. Rating</label> <span>{user.rating_avg} ⭐</span></div>
-                        <div className="info-box"><label>Online Status</label> <span>{user.is_online ? 'Active 🟢' : 'Offline ⚪'}</span></div>
+                        <div className="info-box-item">
+                            <label className="info-label">Phone Number</label> 
+                            <span className="info-value">{user.phone}</span>
+                        </div>
+                        <div className="info-box-item">
+                            <label className="info-label">Email Address</label> 
+                            <span className="info-value">{user.email || 'Not Provided'}</span>
+                        </div>
+                        <div className="info-box-item">
+                            <label className="info-label">Account Status</label> 
+                            <span className={`info-value status-text ${user.is_verified ? 'status-verified' : 'status-pending'}`}>
+                                {user.is_verified ? 'Verified & Active' : 'Pending Verification'}
+                            </span>
+                        </div>
+                        <div className="info-box-item">
+                            <label className="info-label">Performance Rating</label> 
+                            <span className="info-value rating-value">{user.rating_avg || '5.0'} / 5.0</span>
+                        </div>
+                        <div className="info-box-item">
+                            <label className="info-label">Online Status</label> 
+                            <span className={`info-value ${user.is_online ? 'online-active' : 'offline-inactive'}`}>
+                                {user.is_online ? 'Active Connection' : 'Offline'}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 <button className="btn-logout mobile-logout" onClick={handleLogout}>
-                    Logout
+                    Logout Session
                 </button>
 
             </div>

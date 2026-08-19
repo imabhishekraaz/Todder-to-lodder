@@ -1,28 +1,35 @@
+import './App.css'
 import { useState } from 'react'
 import { Route, Routes, Navigate } from 'react-router-dom'
+
+// Login and Signup Pages
 import Login from './pages/login/Login'
 import Signup from './pages/signup/Signup'
-import Dashboard from './pages/Loader/Dashboard/Dashboard'
-import AddVehicle from './pages/Loader/AddVehicle/AddVehicle'
-import AllVehicles from './pages/Loader/AllVehicles/AllVehicles'
-import Profile from './pages/Loader/Profile/Profile'
-import ActiveLoads from './pages/Loader/ActiveLoads/ActiveLoads'
-import AcceptedOrders from './pages/Loader/AcceptedOrders/AcceptedOrders'
-import OrderDetails from './pages/Loader/OrderDetails/OrderDetails'
+
+// Shop Owner Pages
 import ShopDashboard from './pages/Shop_Owner/ShopDashboard/ShopDashboard'
 import ShopOrderDetails from './pages/Shop_Owner/ShopOrderDetails/ShopOrderDetails'
-import CreateOrder from './pages/Shop_Owner/CreateOrder/CreateOrder'
+import PaymentHistory from './pages/Shop_Owner/PaymentHistory/PaymentHistory'
+import ShopProfile from './pages/Shop_Owner/ShopProfile/ShopProfile'
+import NearbyLoader from './pages/Shop_Owner/NearbyLoader/NearbyLoader'
+import ShopPaymentHistory from './pages/Shop_Owner/ShopPaymentHistory/ShopPaymentHistory'
+
+
+// Loader Pages
+import LoaderPaymentHistory from './pages/Loader/LoaderPaymentHistory/LoaderPaymentHistory'
+import LoaderHistoryOrder from './pages/Loader/LoaderHistoryOrder/LoaderHistoryOrder'
+import LoaderCompleteOrder from './pages/Loader/LoaderCompleteOrder/LoaderCompleteOrder'
+import OrderDetails from './pages/Loader/OrderDetails/OrderDetails'
+import AcceptedOrders from './pages/Loader/AcceptedOrders/AcceptedOrders'
+import ActiveLoads from './pages/Loader/ActiveLoads/ActiveLoads'
+import Profile from './pages/Loader/Profile/Profile'
+import AllVehicles from './pages/Loader/AllVehicles/AllVehicles'
+import AddVehicle from './pages/Loader/AddVehicle/AddVehicle'
+import Dashboard from './pages/Loader/Dashboard/Dashboard'
 
 
 // Protected Route import
 import ProtectedRoute from './components/ProtectedRoute'
-import PaymentHistory from './pages/Shop_Owner/PaymentHistory/PaymentHistory'
-import ShopProfile from './pages/Shop_Owner/ShopProfile/ShopProfile'
-import LoaderHistoryOrder from './pages/Loader/LoaderHistoryOrder/LoaderHistoryOrder'
-import LoaderCompleteOrder from './pages/Loader/LoaderCompleteOrder/LoaderCompleteOrder'
-import NearbyLoader from './pages/Shop_Owner/NearbyLoader/NearbyLoader'
-import ShopPaymentHistory from './pages/Shop_Owner/ShopPaymentHistory/ShopPaymentHistory'
-import LoaderPaymentHistory from './pages/Loader/LoaderPaymentHistory/LoaderPaymentHistory'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -48,7 +55,6 @@ function App() {
         {/* ================= SHOP OWNER ROUTES ================= */}
         <Route path='/shop/dashboard' element={<ProtectedRoute allowedRole="shop"><ShopDashboard /></ProtectedRoute>} />
         <Route path='/order/details' element={<ProtectedRoute allowedRole="shop"><ShopOrderDetails /></ProtectedRoute>} />
-        {/* <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><CreateOrder /></ProtectedRoute>} /> */}
         <Route path='/history' element={<ProtectedRoute allowedRole="shop"><PaymentHistory /></ProtectedRoute>} />
         <Route path='/shop/profile' element={<ProtectedRoute allowedRole="shop"><ShopProfile /></ProtectedRoute>} />
         <Route path='/create/order' element={<ProtectedRoute allowedRole="shop"><NearbyLoader /></ProtectedRoute>} />
