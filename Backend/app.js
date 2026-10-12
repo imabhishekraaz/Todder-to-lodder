@@ -28,7 +28,7 @@ const PaymentRouter = require('./src/routes/payment.route');
 app.use(cors());
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: 'https://musical-boba-89b12f.netlify.app/', 
   credentials: true 
 }));
 
